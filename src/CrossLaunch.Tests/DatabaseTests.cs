@@ -32,7 +32,7 @@ public class DatabaseTests
     public async Task AddProjectDirectoryAsync_Adds()
     {
         Assert.That(await _db.ProjectDirectories.CountAsync(), Is.EqualTo(0));
-        var projectDirectory = CreateDirectory("test");
+        var projectDirectory = CreateProjectDirectory("test");
         await _db.AddProjectDirectoryAsync(projectDirectory);
         Assert.That(await _db.ProjectDirectories.CountAsync(), Is.EqualTo(1));
     }
@@ -41,7 +41,7 @@ public class DatabaseTests
     public async Task RemoveProjectDirectoryAsync_Existing_Removed()
     {
         Assert.That(await _db.ProjectDirectories.CountAsync(), Is.EqualTo(0));
-        var projectDirectory = CreateDirectory("test");
+        var projectDirectory = CreateProjectDirectory("test");
         _db.ProjectDirectories.Add(projectDirectory);
         await _db.SaveChangesAsync();
         Assert.That(await _db.ProjectDirectories.CountAsync(), Is.EqualTo(1));
@@ -53,11 +53,11 @@ public class DatabaseTests
     public async Task RemoveProjectDirectoryAsync_Untracked_Noop()
     {
         Assert.That(await _db.ProjectDirectories.CountAsync(), Is.EqualTo(0));
-        var projectDirectory = CreateDirectory("test");
+        var projectDirectory = CreateProjectDirectory("test");
         _db.ProjectDirectories.Add(projectDirectory);
         await _db.SaveChangesAsync();
         Assert.That(await _db.ProjectDirectories.CountAsync(), Is.EqualTo(1));
-        Assert.That(async () => await _db.RemoveProjectDirectoryAsync(CreateDirectory("test")), Throws.InstanceOf<InvalidOperationException>());
+        Assert.That(async () => await _db.RemoveProjectDirectoryAsync(CreateProjectDirectory("test")), Throws.InstanceOf<InvalidOperationException>());
         Assert.That(await _db.ProjectDirectories.CountAsync(), Is.EqualTo(1));
     }
 
@@ -65,11 +65,11 @@ public class DatabaseTests
     public async Task RemoveProjectDirectoryAsync_UntrackedAndNonexistent_Noop()
     {
         Assert.That(await _db.ProjectDirectories.CountAsync(), Is.EqualTo(0));
-        var projectDirectory = CreateDirectory("test");
+        var projectDirectory = CreateProjectDirectory("test");
         _db.ProjectDirectories.Add(projectDirectory);
         await _db.SaveChangesAsync();
         Assert.That(await _db.ProjectDirectories.CountAsync(), Is.EqualTo(1));
-        Assert.That(async () => await _db.RemoveProjectDirectoryAsync(CreateDirectory("test2")), Throws.InstanceOf<DbUpdateConcurrencyException>());
+        Assert.That(async () => await _db.RemoveProjectDirectoryAsync(CreateProjectDirectory("test2")), Throws.InstanceOf<DbUpdateConcurrencyException>());
         Assert.That(await _db.ProjectDirectories.CountAsync(), Is.EqualTo(1));
     }
 
@@ -109,8 +109,28 @@ public class DatabaseTests
         };
     }
 
-    private static ProjectDirectoryModel CreateDirectory(string fullPath)
+    private static ProjectDirectoryModel CreateProjectDirectory(string fullPath)
     {
         return new ProjectDirectoryModel { FullPath = fullPath, Projects = new HashSet<ProjectDirectoryProjectModel>(), RecordUpdateTime = DateTime.Now };
+    }
+
+    private static ProjectDirectoryProjectModel CreateProjectDirectoryProject(string fullPath, ProjectDirectoryModel projectDirectory, string projectEvaluatorType = "lol", string framework = "xd")
+    {
+        var now = DateTime.Now;
+        return new ProjectDirectoryProjectModel
+        {
+            FullPath = fullPath,
+            Framework = framework,
+            RecordUpdateTime = now,
+            ProjectEvaluatorType = projectEvaluatorType,
+            ProjectDirectory = projectDirectory
+        };
+    }
+
+    public class TestEvaluator : IProjectEvaluator
+    {
+        public Task<EvaluatedProject> EvaluateProjectAsync(string path, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
+        public IAsyncEnumerable<EvaluatedProject> FindProjectsAsync(string path, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 }
