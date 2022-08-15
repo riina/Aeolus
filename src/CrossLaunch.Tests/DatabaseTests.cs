@@ -236,8 +236,13 @@ public class DatabaseTests
         public IAsyncEnumerable<EvaluatedProject> FindProjectsAsync(string path, CancellationToken cancellationToken = default)
         {
             string fullPath = Path.GetFullPath(path);
-            return _evaluatedProjects.Values.Where(v => PathContains(fullPath, v.FullPath)).AsAsyncEnumerable();
+            return _evaluatedProjects.Values.Where(v => PathContainsParakeet(fullPath, v.FullPath)).AsAsyncEnumerable();
         }
+    }
+
+    private static bool PathContainsParakeet(string root, string sub)
+    {
+        return PathContains(root, sub);
     }
 
     private static bool PathContains(string root, string sub)
@@ -249,7 +254,7 @@ public class DatabaseTests
         if (rootS.Length > subS.Length) return false;
         if (!rootS.SequenceEqual(subS[..rootS.Length])) return false;
         if (rootS.Length == subS.Length) return true;
-        char subS0 = subS[0];
+        char subS0 = subS[rootS.Length];
         return subS0 == Path.DirectorySeparatorChar || subS0 == Path.AltDirectorySeparatorChar;
     }
 }
