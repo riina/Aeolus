@@ -41,6 +41,8 @@ public static class ProjectUtil
         RecentProjectModel result;
         if (await context.RecentProjects.FindAsync(recentProject.FullPath).ConfigureAwait(false) is { } existing)
         {
+            existing.ProjectEvaluatorType = recentProject.ProjectEvaluatorType;
+            existing.Framework = recentProject.Framework;
             result = existing;
             context.RecentProjects.Update(existing);
         }
