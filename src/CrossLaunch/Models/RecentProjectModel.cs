@@ -5,6 +5,7 @@ namespace CrossLaunch.Models;
 
 public class RecentProjectModel : BaseProjectModel
 {
+    public virtual DateTime OpenedTime { get; set; }
 }
 
 public class RecentProjectModelConfiguration : IEntityTypeConfiguration<RecentProjectModel>
