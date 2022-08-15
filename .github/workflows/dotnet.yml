@@ -9,16 +9,16 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 6.0.400
+    #- name: Setup .NET
+    #  uses: actions/setup-dotnet@v1
+    #  with:
+    #    dotnet-version: 6.0.400
     - name: Install workloads
-      run: dotnet workload install macos maui-windows
+      run: dotnet workload install macos maccatalyst maui-windows
     - name: Install dependencies
       run: dotnet restore src
     - name: Build
