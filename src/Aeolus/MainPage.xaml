@@ -35,6 +35,19 @@
                 Clicked="OnCounterClicked"
                 HorizontalOptions="Center" />
 
+            <Button
+                x:Name="OpenFolderBtn"
+                Text="Open Folder..."
+                SemanticProperties.Hint="Opens a folder"
+                Clicked="OnOpenFolderClicked"
+                HorizontalOptions="Center" />
+
+            <Label
+                x:Name="SelectionButton"
+                Text="Selection goes here..."
+                FontSize="12"
+                HorizontalOptions="Center" />
+
         </VerticalStackLayout>
     </ScrollView>
 

@@ -12,7 +12,11 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
-
-		return builder.Build();
+#if WINDOWS
+		builder.Services.AddTransient<IFolderPicker, Platforms.Windows.FolderPicker>();
+#endif
+        builder.Services.AddTransient<MainPage>();
+        builder.Services.AddTransient<App>();
+        return builder.Build();
 	}
 }

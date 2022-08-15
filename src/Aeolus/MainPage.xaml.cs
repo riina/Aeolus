@@ -2,23 +2,32 @@
 
 public partial class MainPage : ContentPage
 {
-	int count = 0;
+    private readonly IFolderPicker _folderPicker;
 
-	public MainPage()
-	{
-		InitializeComponent();
-	}
+    int count = 0;
 
-	private void OnCounterClicked(object sender, EventArgs e)
-	{
-		count++;
+    public MainPage(IFolderPicker folderPicker)
+    {
+        InitializeComponent();
+        _folderPicker = folderPicker;
+    }
 
-		if (count == 1)
-			CounterBtn.Text = $"Clicked {count} time";
-		else
-			CounterBtn.Text = $"Clicked {count} times";
+    private void OnCounterClicked(object sender, EventArgs e)
+    {
+        count++;
 
-		SemanticScreenReader.Announce(CounterBtn.Text);
-	}
+        if (count == 1)
+            CounterBtn.Text = $"Clicked {count} time";
+        else
+            CounterBtn.Text = $"Clicked {count} times";
+
+        SemanticScreenReader.Announce(CounterBtn.Text);
+    }
+
+    private async void OnOpenFolderClicked(object sender, EventArgs e)
+    {
+        var picked = await _folderPicker.PickFolderAsync();
+        SelectionButton.Text = $"Picked [{picked ?? "null"}]";
+    }
 }
 
