@@ -6,35 +6,63 @@ namespace CrossLaunch;
 
 public static class ProjectUtil
 {
-    public static async Task AddProjectDirectoryAsync(this CLContextBase context, ProjectDirectoryModel projectDirectory)
+    public static async Task<ProjectDirectoryModel> AddProjectDirectoryAsync(this CLContextBase context, ProjectDirectoryModel projectDirectory)
     {
-        context.ProjectDirectories.Add(projectDirectory);
+        DateTime now = DateTime.Now;
+        ProjectDirectoryModel result;
+        if (await context.ProjectDirectories.FindAsync(projectDirectory.FullPath).ConfigureAwait(false) is { } existing)
+        {
+            result = existing;
+            context.ProjectDirectories.Update(existing);
+        }
+        else
+        {
+            result = projectDirectory;
+            context.ProjectDirectories.Add(projectDirectory);
+        }
+        result.RecordUpdateTime = now;
         await context.SaveChangesAsync().ConfigureAwait(false);
+        return result;
     }
 
     public static async Task RemoveProjectDirectoryAsync(this CLContextBase context, ProjectDirectoryModel projectDirectory)
     {
-        context.ProjectDirectories.Remove(projectDirectory);
-        await context.SaveChangesAsync().ConfigureAwait(false);
+        if (await context.ProjectDirectories.FindAsync(projectDirectory.FullPath).ConfigureAwait(false) is { } existing)
+        {
+            context.ProjectDirectories.Remove(existing);
+            await context.SaveChangesAsync().ConfigureAwait(false);
+        }
     }
 
-    public static async Task PushRecentProjectAsync(this CLContextBase context, CLConfiguration configuration, RecentProjectModel recentProject)
+    public static async Task<RecentProjectModel> PushRecentProjectAsync(this CLContextBase context, CLConfiguration configuration, RecentProjectModel recentProject)
     {
         DateTime dateTime = DateTime.Now;
-        recentProject.OpenedTime = dateTime;
-        recentProject.RecordUpdateTime = dateTime;
-        context.RecentProjects.Add(recentProject);
+        //if(await context.RecentProjects.FindAsync(recentProject.FullPath))
+        RecentProjectModel result;
+        if (await context.RecentProjects.FindAsync(recentProject.FullPath).ConfigureAwait(false) is { } existing)
+        {
+            result = existing;
+            context.RecentProjects.Update(existing);
+        }
+        else
+        {
+            result = recentProject;
+            context.RecentProjects.Add(recentProject);
+        }
+        result.OpenedTime = dateTime;
+        result.RecordUpdateTime = dateTime;
         await context.SaveChangesAsync().ConfigureAwait(false);
-        int existingCount = await context.RecentProjects.CountAsync();
+        int existingCount = await context.RecentProjects.CountAsync().ConfigureAwait(false);
         int over = existingCount - Math.Max(0, configuration.MaxRecentProjects);
         if (over > 0) context.RecentProjects.RemoveRange(await context.RecentProjects.OrderBy(v => v.OpenedTime).Take(over).ToListAsync().ConfigureAwait(false));
         await context.SaveChangesAsync().ConfigureAwait(false);
+        return result;
     }
 
     public static async Task PushRecentProjectAsync(this CLContextBase context, CLConfiguration configuration, ProjectDirectoryProjectModel projectDirectoryProject)
     {
-        var recentProject = await context.RecentProjects.FindAsync(projectDirectoryProject.FullPath) ?? new RecentProjectModel { FullPath = projectDirectoryProject.FullPath, Framework = projectDirectoryProject.Framework, RecordUpdateTime = DateTime.Now, ProjectEvaluatorType = projectDirectoryProject.ProjectEvaluatorType };
-        await PushRecentProjectAsync(context, configuration, recentProject);
+        var recentProject = await context.RecentProjects.FindAsync(projectDirectoryProject.FullPath).ConfigureAwait(false) ?? new RecentProjectModel { FullPath = projectDirectoryProject.FullPath, Framework = projectDirectoryProject.Framework, RecordUpdateTime = DateTime.Now, ProjectEvaluatorType = projectDirectoryProject.ProjectEvaluatorType };
+        await PushRecentProjectAsync(context, configuration, recentProject).ConfigureAwait(false);
     }
 
     public static async Task UpdateProjectDirectoryProjectListAsync(this CLContextBase context, ProjectDirectoryModel directory, IReadOnlyList<IProjectEvaluator> evaluators)
@@ -48,12 +76,19 @@ public static class ProjectUtil
                 string evaluatorType = CreateToolString(evaluator.GetType());
                 await foreach (var x in evaluator.FindProjectsAsync(projectDirectory).ConfigureAwait(false))
                 {
-                    ProjectDirectoryProjectModel project = await context.ProjectDirectoryProjects.FindAsync(x.FullPath) ?? new ProjectDirectoryProjectModel { FullPath = x.FullPath, };
+                    ProjectDirectoryProjectModel? project = await context.ProjectDirectoryProjects.FindAsync(x.FullPath).ConfigureAwait(false);
+                    if (project == null)
+                    {
+                        project = new ProjectDirectoryProjectModel { FullPath = x.FullPath };
+                    }
                     project.ProjectDirectory = directory;
                     project.ProjectEvaluatorType = evaluatorType;
                     project.Framework = x.Framework;
                     project.RecordUpdateTime = recordUpdateTime;
-                    context.ProjectDirectoryProjects.Add(project);
+                    string key = project.FullPath;
+                    if (await context.ProjectDirectoryProjects.AnyAsync(v => v.FullPath == key).ConfigureAwait(false))
+                        context.ProjectDirectoryProjects.Update(project);
+                    else context.ProjectDirectoryProjects.Add(project);
                 }
             }
         }

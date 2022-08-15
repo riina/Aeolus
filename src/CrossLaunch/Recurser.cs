@@ -2,9 +2,9 @@ namespace CrossLaunch;
 
 public static class Recurser
 {
-    public static async Task RecurseAsync(IEnumerable<string> inputs, Func<string, Task>? onFile, Func<string, Task>? onDirectory)
+    public static Task RecurseAsync(IEnumerable<string> inputs, Func<string, Task>? onFile, Func<string, Task>? onDirectory)
     {
-        await RecurseAsync(inputs.Select(v => new EntryItem(File.Exists(v), v)), onFile, onDirectory).ConfigureAwait(false);
+        return RecurseAsync(inputs.Select(v => new EntryItem(File.Exists(v), v)), onFile, onDirectory);
     }
 
     private static async Task RecurseAsync(IEnumerable<EntryItem> inputs, Func<string, Task>? onFile, Func<string, Task>? onDirectory)
