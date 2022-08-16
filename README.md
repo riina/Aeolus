@@ -52,6 +52,10 @@ Launch project by path:
 
 `cl x ~/wkspaces/Cybertek`
 
+Get help:
+
+`cl --help`
+
 # CrossLaunch
 
 The core .NET 6.0 library for use with Aeolus and cl. Provides EF Core DbContext base class for underlying project database and some convenience utilities for writing project evaluators / loaders.
