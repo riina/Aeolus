@@ -124,7 +124,7 @@ public class DatabaseTests
         var dir = CreateProjectDirectory("x1");
         await _db.AddProjectDirectoryAsync(dir);
         var evaluator = new TestEvaluator(new RelativeEvaluatedProject("x1/p0", "v1"), new RelativeEvaluatedProject("x1/p1", "v1"));
-        await _db.UpdateProjectDirectoryProjectListAsync(dir, new[] { evaluator });
+        await _db.UpdateProjectDirectoryProjectListAsync(dir, _config, new[] { evaluator });
         Assert.Multiple(async () =>
         {
             Assert.That(await _db.ProjectDirectoryProjects.FindAsync(Path.GetFullPath("x1/p0")), Is.Not.Null);
@@ -141,7 +141,7 @@ public class DatabaseTests
         _db.ProjectDirectoryProjects.Add(CreateProjectDirectoryProject("x1/p1", dir));
         await _db.SaveChangesAsync();
         var evaluator = new TestEvaluator(new RelativeEvaluatedProject("x1/p0", "v1"), new RelativeEvaluatedProject("x1/p1", "v1"), new RelativeEvaluatedProject("x1/p2", "v1"));
-        await _db.UpdateProjectDirectoryProjectListAsync(dir, new[] { evaluator });
+        await _db.UpdateProjectDirectoryProjectListAsync(dir, _config, new[] { evaluator });
         Assert.Multiple(async () =>
         {
             Assert.That(await _db.ProjectDirectoryProjects.FindAsync(Path.GetFullPath("x1/p0")), Is.Not.Null);
@@ -159,7 +159,7 @@ public class DatabaseTests
         await _db.SaveChangesAsync();
         Assert.That((await _db.ProjectDirectoryProjects.FindAsync(Path.GetFullPath("x1/p0")))?.Framework, Is.EqualTo("v0"));
         var evaluator = new TestEvaluator(new RelativeEvaluatedProject("x1/p0", "v2"));
-        await _db.UpdateProjectDirectoryProjectListAsync(dir, new[] { evaluator });
+        await _db.UpdateProjectDirectoryProjectListAsync(dir, _config, new[] { evaluator });
         Assert.That((await _db.ProjectDirectoryProjects.FindAsync(Path.GetFullPath("x1/p0")))?.Framework, Is.EqualTo("v2"));
     }
 
@@ -172,7 +172,7 @@ public class DatabaseTests
         _db.ProjectDirectoryProjects.Add(CreateProjectDirectoryProject("x1/p1", dir));
         await _db.SaveChangesAsync();
         var evaluator = new TestEvaluator(new RelativeEvaluatedProject("x1/p0", "v1"));
-        await _db.UpdateProjectDirectoryProjectListAsync(dir, new[] { evaluator });
+        await _db.UpdateProjectDirectoryProjectListAsync(dir, _config, new[] { evaluator });
         Assert.Multiple(async () =>
         {
             Assert.That(await _db.ProjectDirectoryProjects.FindAsync(Path.GetFullPath("x1/p0")), Is.Not.Null);
@@ -227,13 +227,15 @@ public class DatabaseTests
             _evaluatedProjects = evaluatedProjects.ToDictionary(v => v.FullPath);
         }
 
-        public Task<EvaluatedProject?> EvaluateProjectAsync(string path, CancellationToken cancellationToken = default)
+        public string FriendlyPlatformName => "Fakyuu!";
+
+        public Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default)
         {
             string fullPath = Path.GetFullPath(path);
             return Task.FromResult(_evaluatedProjects.TryGetValue(fullPath, out var evaluatedProject) ? evaluatedProject : null);
         }
 
-        public IAsyncEnumerable<EvaluatedProject> FindProjectsAsync(string path, CancellationToken cancellationToken = default)
+        public IAsyncEnumerable<EvaluatedProject> FindProjectsAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default)
         {
             string fullPath = Path.GetFullPath(path);
             return _evaluatedProjects.Values.Where(v => PathContainsParakeet(fullPath, v.FullPath)).AsAsyncEnumerable();

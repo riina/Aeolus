@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using CrossLaunch.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -67,7 +66,7 @@ public static class ProjectUtil
         await PushRecentProjectAsync(context, configuration, recentProject).ConfigureAwait(false);
     }
 
-    public static async Task UpdateProjectDirectoryProjectListAsync(this CLContextBase context, ProjectDirectoryModel directory, IReadOnlyList<IProjectEvaluator> evaluators)
+    public static async Task UpdateProjectDirectoryProjectListAsync(this CLContextBase context, ProjectDirectoryModel directory, CLConfiguration configuration, IReadOnlyList<IProjectEvaluator> evaluators)
     {
         string projectDirectory = directory.FullPath;
         DateTime recordUpdateTime = DateTime.Now;
@@ -75,8 +74,8 @@ public static class ProjectUtil
         {
             foreach (var evaluator in evaluators)
             {
-                string evaluatorType = CreateToolString(evaluator.GetType());
-                await foreach (var x in evaluator.FindProjectsAsync(projectDirectory).ConfigureAwait(false))
+                string evaluatorType = TypeTool.CreateTypeString(evaluator.GetType());
+                await foreach (var x in evaluator.FindProjectsAsync(projectDirectory, configuration).ConfigureAwait(false))
                 {
                     ProjectDirectoryProjectModel? project = await context.ProjectDirectoryProjects.FindAsync(x.FullPath).ConfigureAwait(false);
                     if (project == null)
@@ -102,22 +101,4 @@ public static class ProjectUtil
         context.ProjectDirectoryProjects.RemoveRange(context.ProjectDirectoryProjects.Where(v => v.RecordUpdateTime != recordUpdateTime));
         await context.SaveChangesAsync().ConfigureAwait(false);
     }
-
-
-    private static string CreateToolString(Type type)
-    {
-        string assemblyName = type.Assembly.GetName().Name ?? throw new InvalidOperationException();
-        string typeName = type.FullName ?? throw new InvalidOperationException();
-        return $"{assemblyName}::{typeName}";
-    }
-
-    private static (string assembly, string type) GetId(string tool)
-    {
-        if (tool == null) throw new ArgumentNullException(nameof(tool));
-        if (s_toolRegex.Match(tool) is not { Success: true } match)
-            throw new ArgumentException("Tool string is in invalid format, must be \"<assembly>::<toolType>\"", nameof(tool));
-        return (match.Groups[1].Value, match.Groups[2].Value);
-    }
-
-    private static readonly Regex s_toolRegex = new(@"^([\S\s]+)::([\S\s]+)$");
 }

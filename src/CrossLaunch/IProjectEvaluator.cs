@@ -2,7 +2,9 @@ namespace CrossLaunch;
 
 public interface IProjectEvaluator
 {
-    Task<EvaluatedProject?> EvaluateProjectAsync(string path, CancellationToken cancellationToken = default);
+    string FriendlyPlatformName { get; }
 
-    IAsyncEnumerable<EvaluatedProject> FindProjectsAsync(string path, CancellationToken cancellationToken = default);
+    Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default);
+
+    IAsyncEnumerable<EvaluatedProject> FindProjectsAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default);
 }
