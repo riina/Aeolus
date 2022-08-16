@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using CrossLaunch.Models;
 
@@ -59,13 +60,26 @@ public class VisualStudioSupport : FileSupportBase<VisualStudioProjectLoader>
 
     public override string GetDisplayFramework(BaseProjectModel project)
     {
+        return TryGetMinimumVisualStudio(project, out string? result) ? result : project.Framework;
+    }
+
+
+    public static bool TryGetMinimumVisualStudio(BaseProjectModel project, [NotNullWhen(true)] out string? result)
+    {
         ReadOnlySpan<char> slice = project.Framework;
         int index = slice.IndexOf('/');
-        if (index == -1) return project.Framework;
-        slice = slice[..index];
-        int index2 = slice.IndexOf('.');
-        if (index2 == -1) return project.Framework;
-        return new string(slice[..index2]);
+        if (index != -1)
+        {
+            slice = slice[..index];
+            int index2 = slice.IndexOf('.');
+            if (index2 != -1)
+            {
+                result = new string(slice[..index2]);
+                return true;
+            }
+        }
+        result = null;
+        return false;
     }
 }
 
@@ -73,7 +87,35 @@ public class VisualStudioProjectLoader : IProjectLoader
 {
     public Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration)
     {
-        // TODO
-        return Task.FromResult(ProjectLoadResult.Failure("Not Supported", "Loading Visual Studio projects is not yet supported"));
+        if (!VisualStudioSupport.TryGetMinimumVisualStudio(project, out string? framework)) return Task.FromResult(ProjectLoadResult.BadFrameworkId(project.Framework));
+        // TODO parse out solution into project references
+        var remediations = new List<ProjectLoadFailRemediation>();
+        if (configuration.TryGetFlag("visualstudio.rider.enable", out bool riderEnabled))
+        {
+            // TODO check projects for rider compat (just check Sdk), try loading if valid
+            remediations.Add(new ProjectLoadFailRemediation("Get JetBrains Rider", @"Install JetBrains Rider, a feature-rich proprietary IDE primarily for .NET development.
+https://www.jetbrains.com/rider/", ProcessUtils.GetUriCallback("https://www.jetbrains.com/rider/")));
+        }
+        if (configuration.TryGetFlag("visualstudio.vscode.enable", out bool vscodeEnabled))
+        {
+            // TODO try loading through vscode
+            remediations.Add(new ProjectLoadFailRemediation("Get Visual Studio Code", @"Install Visual Studio Code from Microsoft Corporation, a lightweight proprietary code editor.
+https://code.visualstudio.com/", ProcessUtils.GetUriCallback("https://code.visualstudio.com/")));
+        }
+        if (OperatingSystem.IsWindows())
+        {
+            // TODO load through visual studio (e.g. vswhere)
+            remediations.Add(new ProjectLoadFailRemediation("Get Visual Studio", @"Install Visual Studio from Microsoft Corporation, a feature-rich proprietary IDE.
+https://visualstudio.microsoft.com/vs/", ProcessUtils.GetUriCallback("https://visualstudio.microsoft.com/vs/")));
+        }
+        else if (OperatingSystem.IsMacOS())
+        {
+            // TODO load through vs for mac
+            remediations.Add(new ProjectLoadFailRemediation("Get Visual Studio for Mac", @"Install Visual Studio for Mac from Microsoft Corporation.
+https://visualstudio.microsoft.com/vs/mac/", ProcessUtils.GetUriCallback("https://visualstudio.microsoft.com/vs/mac/")));
+        }
+        return Task.FromResult(ProjectLoadResult.Failure("No Valid Program Found", @"Failed to identify software capable of opening this Visual Studio solution file.
+
+A program such as Visual Studio or Rider must be installed.", remediations.ToArray()));
     }
 }

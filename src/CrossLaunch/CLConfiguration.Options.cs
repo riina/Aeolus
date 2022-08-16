@@ -9,7 +9,8 @@ namespace CrossLaunch;
  */
 public partial class CLConfiguration
 {
-    private static readonly HashSet<string> s_yesLower = new() { "y", "yes", "" };
+    // Art only has y/yes, this adds true and removes empty (that might've been an error...)
+    private static readonly HashSet<string> s_yesLower = new() { "y", "yes", "true" };
 
     #region Base
 
