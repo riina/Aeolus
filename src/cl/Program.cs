@@ -107,11 +107,12 @@ var projectListCommand = new Command("list", "List projects");
 var projectListCommandHandler = CommandHandler.Create(async () =>
 {
     var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
+    var uniqueMap = instance.CreateUnambiguousRootNameMap();
     foreach (var project in instance.Db.ProjectDirectoryProjects)
     {
         StringBuilder sb = new();
-        if (project.Nickname is { } nick) sb.Append(nick).Append(" - ");
-        sb.Append(CultureInfo.InvariantCulture, $"{project.FullPath} ({instance.GetPlatformName(project)} {instance.GetDisplayFramework(project)})");
+        if (project.Nickname is { } nick) sb.Append('\"').Append(nick).Append("\" ");
+        sb.Append(CultureInfo.InvariantCulture, $"[{uniqueMap[project.ProjectDirectory.FullPath]}]{instance.GetRelativePathInProjectFolder(project)} ({instance.GetPlatformName(project)} {instance.GetDisplayFramework(project)})");
         Console.WriteLine(sb.ToString());
     }
 });
@@ -120,24 +121,6 @@ projectCommand.Add(projectListCommand);
 var lCommand = new Command("l", "List projects");
 lCommand.Handler = projectListCommandHandler;
 rootCommand.Add(lCommand);
-// project recent
-var projectRecentCommand = new Command("recent", "List recent projects");
-var projectRecentCommandHandler = CommandHandler.Create(async () =>
-{
-    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
-    foreach (var project in instance.Db.RecentProjects.OrderByDescending(v => v.OpenedTime))
-    {
-        StringBuilder sb = new();
-        if (project.Nickname is { } nick) sb.Append(nick).Append(" - ");
-        sb.Append(CultureInfo.InvariantCulture, $"{project.FullPath} ({instance.GetPlatformName(project)} {instance.GetDisplayFramework(project)})");
-        Console.WriteLine(sb.ToString());
-    }
-});
-projectRecentCommand.Handler = projectRecentCommandHandler;
-projectCommand.Add(projectRecentCommand);
-var rCommand = new Command("r", "List recent projects");
-rCommand.Handler = projectRecentCommandHandler;
-rootCommand.Add(rCommand);
 // project launch
 var projectLaunchProjectArgument = new Argument<string>("project", description: "Target project path or nick");
 var projectLaunchInteractiveOption = new Option<bool>("--interactive", "Allow interactive remediations");
@@ -161,67 +144,64 @@ var projectLaunchCommandHandler = CommandHandler.Create(async (string project, b
         await instance.PushRecentProjectAsync(toLaunch);
         return 0;
     }
-    else
+    if (result.FailInfo is { } failInfo)
     {
-        if (result.FailInfo is { } failInfo)
+        Console.WriteLine();
+        Console.WriteLine($"## {failInfo.Title} ##");
+        Console.WriteLine();
+        Console.WriteLine(failInfo.ErrorMessage);
+        if (failInfo.Remediations.Length != 0)
         {
             Console.WriteLine();
-            Console.WriteLine($"## {failInfo.Title} ##");
+            Console.WriteLine("## Options ##");
             Console.WriteLine();
-            Console.WriteLine(failInfo.ErrorMessage);
-            if (failInfo.Remediations.Length != 0)
+            if (interactive)
             {
+                Console.WriteLine("0: Quit");
                 Console.WriteLine();
-                Console.WriteLine("## Options ##");
+            }
+            for (int i = 0; i < failInfo.Remediations.Length; i++)
+            {
+                ProjectLoadFailRemediation remediation = failInfo.Remediations[i];
+                Console.WriteLine(interactive ? $"{i + 1}: {remediation.ActionShortName}" : $"-- {remediation.ActionShortName}");
+                Console.WriteLine(remediation.ActionDescription);
                 Console.WriteLine();
-                if (interactive)
+            }
+            if (interactive)
+            {
+                while (true)
                 {
-                    Console.WriteLine("0: Quit");
-                    Console.WriteLine();
-                }
-                for (int i = 0; i < failInfo.Remediations.Length; i++)
-                {
-                    ProjectLoadFailRemediation remediation = failInfo.Remediations[i];
-                    Console.WriteLine(interactive ? $"{i + 1}: {remediation.ActionShortName}" : $"-- {remediation.ActionShortName}");
-                    Console.WriteLine(remediation.ActionDescription);
-                    Console.WriteLine();
-                }
-                if (interactive)
-                {
-                    while (true)
+                    Console.Write("Select an option: ");
+                    if (!int.TryParse(Console.ReadLine(), out int choice))
                     {
-                        Console.Write("Select an option: ");
-                        if (!int.TryParse(Console.ReadLine(), out int choice))
+                        Console.WriteLine("Invalid input: enter a number");
+                    }
+                    else if (choice == 0)
+                    {
+                        return 0;
+                    }
+                    else
+                    {
+                        choice--;
+                        if (choice >= failInfo.Remediations.Length)
                         {
-                            Console.WriteLine("Invalid input: enter a number");
-                        }
-                        else if (choice == 0)
-                        {
-                            return 0;
+                            Console.WriteLine("Invalid input: out of range");
                         }
                         else
                         {
-                            choice--;
-                            if (choice >= failInfo.Remediations.Length)
-                            {
-                                Console.WriteLine("Invalid input: out of range");
-                            }
-                            else
-                            {
-                                await failInfo.Remediations[choice].Callback();
-                                return 0;
-                            }
+                            await failInfo.Remediations[choice].Callback();
+                            return 0;
                         }
                     }
                 }
             }
         }
-        else
-        {
-            Console.WriteLine($"Project \"{project}\" failed to open");
-        }
-        return 2;
     }
+    else
+    {
+        Console.WriteLine($"Project \"{project}\" failed to open");
+    }
+    return 2;
 });
 projectLaunchCommand.Handler = projectLaunchCommandHandler;
 xCommand.Handler = projectLaunchCommandHandler;
@@ -256,6 +236,36 @@ projectUnnickCommand.Handler = CommandHandler.Create(async (string project) =>
     }
 });
 projectCommand.Add(projectUnnickCommand);
+// recent
+var projectRecentCommand = new Command("recent", "Manage recent projects");
+rootCommand.Add(projectRecentCommand);
+// recent list
+var projectRecentListCommand = new Command("list", "List recent projects");
+var projectRecentCommandHandler = CommandHandler.Create(async () =>
+{
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
+    foreach (var project in instance.Db.RecentProjects.OrderByDescending(v => v.OpenedTime))
+    {
+        StringBuilder sb = new();
+        if (project.Nickname is { } nick) sb.Append('\"').Append(nick).Append("\" ");
+        sb.Append(CultureInfo.InvariantCulture, $"{project.FullPath} ({instance.GetPlatformName(project)} {instance.GetDisplayFramework(project)})");
+        Console.WriteLine(sb.ToString());
+    }
+});
+projectRecentListCommand.Handler = projectRecentCommandHandler;
+projectRecentCommand.Add(projectRecentListCommand);
+var rCommand = new Command("r", "List recent projects");
+rCommand.Handler = projectRecentCommandHandler;
+rootCommand.Add(rCommand);
+// recent clear
+var projectRecentClearCommand = new Command("clear", "Clear recent projects");
+projectRecentClearCommand.Handler = CommandHandler.Create(async () =>
+{
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
+    instance.Db.RecentProjects.RemoveRange(instance.Db.RecentProjects);
+    await instance.Db.SaveChangesAsync();
+});
+projectRecentCommand.Add(projectRecentClearCommand);
 // config
 var configCommand = new Command("config", "Manage configuration");
 rootCommand.Add(configCommand);

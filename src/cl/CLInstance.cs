@@ -96,6 +96,23 @@ public sealed class CLInstance : IDisposable
         return loader.TryLoadAsync(projectModel, Configuration);
     }
 
+    public string GetRelativePathInProjectFolder(ProjectDirectoryProjectModel project)
+    {
+        EnsureNotDisposed();
+        return GetRelativePathInProjectFolderInternal(project, project.ProjectDirectory.FullPath);
+    }
+
+    public string GetRelativePathInProjectFolder(BaseProjectModel project, string projectFolder)
+    {
+        EnsureNotDisposed();
+        return GetRelativePathInProjectFolderInternal(project, projectFolder);
+    }
+
+    private string GetRelativePathInProjectFolderInternal(BaseProjectModel project, string projectFolder)
+    {
+        return Path.GetRelativePath(projectFolder, project.FullPath);
+    }
+
     public string GetPlatformName(BaseProjectModel project)
     {
         EnsureNotDisposed();
@@ -106,6 +123,59 @@ public sealed class CLInstance : IDisposable
     {
         EnsureNotDisposed();
         return GetProjectEvaluator(project)?.GetDisplayFramework(project) ?? project.Framework;
+    }
+
+    public Dictionary<string, string> CreateUnambiguousRootNameMap()
+    {
+        string[] keys = Db.ProjectDirectories.Select(v => v.FullPath).ToArray();
+        (string src, string main, string sub)[] arr = new (string src, string main, string sub)[keys.Length];
+        for (int i = 0; i < keys.Length; i++)
+        {
+            ref var v = ref arr[i];
+            string key = keys[i];
+            v.src = key;
+            v.main = Path.GetDirectoryName(key) ?? "";
+            v.sub = Path.GetFileName(key);
+        }
+        int ch = 0;
+        do
+        {
+            for (int i = 0; i < arr.Length; i++)
+            {
+                ref var v = ref arr[i];
+                int mIdx = -1;
+                for (int j = 0; j < i; j++)
+                    if (arr[j].sub.Equals(v.sub))
+                    {
+                        mIdx = j;
+                        break;
+                    }
+                if (mIdx == -1)
+                    for (int j = i + 1; j < arr.Length; j++)
+                        if (arr[j].sub.Equals(v.sub))
+                        {
+                            mIdx = j;
+                            break;
+                        }
+                if (mIdx != -1)
+                {
+                    ch++;
+                    string? main2 = Path.GetDirectoryName(v.main);
+                    if (main2 != null)
+                    {
+                        v.main = main2;
+                        v.sub = Path.Combine(Path.GetFileName(v.main), v.sub);
+                    }
+                    else
+                    {
+                        // since db is keyed by full path, *should* be unique and never touched again
+                        v.main = "";
+                        v.sub = v.src;
+                    }
+                }
+            }
+        } while (ch != 0);
+        return arr.ToDictionary(v => v.src, v => v.sub);
     }
 
     private void EnsureNotDisposed()
