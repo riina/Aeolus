@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using CrossLaunch;
 using CrossLaunch.Models;
 using Microsoft.EntityFrameworkCore;
@@ -125,8 +126,14 @@ public sealed class CLInstance : IDisposable
         return GetProjectEvaluator(project)?.GetDisplayFramework(project) ?? project.Framework;
     }
 
-    public Dictionary<string, string> CreateUnambiguousRootNameMap()
+    public string GetShorthand(ProjectDirectoryProjectModel project, CLDirectoryPairs pairs)
     {
+        return $"{pairs.From[project.ProjectDirectory.FullPath]}:{GetRelativePathInProjectFolder(project)}";
+    }
+
+    public CLDirectoryPairs CreateUnambiguousProjectDirectoryAliases()
+    {
+        EnsureNotDisposed();
         string[] keys = Db.ProjectDirectories.Select(v => v.FullPath).ToArray();
         (string src, string main, string sub)[] arr = new (string src, string main, string sub)[keys.Length];
         for (int i = 0; i < keys.Length; i++)
@@ -175,7 +182,46 @@ public sealed class CLInstance : IDisposable
                 }
             }
         } while (ch != 0);
-        return arr.ToDictionary(v => v.src, v => v.sub);
+        return new CLDirectoryPairs(arr.ToDictionary(v => v.src, v => v.sub), arr.ToDictionary(v => v.sub, v => v.src));
+    }
+
+    public Task<BaseProjectModel?> FindProjectAsync(string key, CLDirectoryPairs? pairs = null)
+    {
+        EnsureNotDisposed();
+        return FindProjectInternalAsync(key, pairs);
+    }
+
+    public async Task<BaseProjectModel?> FindProjectInternalAsync(string key, CLDirectoryPairs? pairs = null)
+    {
+        BaseProjectModel? project;
+        string fullPath = Path.GetFullPath(key);
+        project = Db.ProjectDirectoryProjects.FirstOrDefault(v => v.Nickname == key);
+        if (project == null && TrySplitProjectShorthand(key, out string? pairValue, out string? subDir))
+        {
+            if (pairs != null && pairs.To.TryGetValue(pairValue, out string? pairKey))
+            {
+                project = await Db.ProjectDirectoryProjects.FindAsync(Path.GetFullPath(Path.Combine(pairKey, subDir)));
+            }
+        }
+        else
+            project ??= await Db.ProjectDirectoryProjects.FindAsync(fullPath);
+        return project;
+    }
+
+    private static bool TrySplitProjectShorthand(string key, [NotNullWhen(true)] out string? pairValue, [NotNullWhen(true)] out string? subDir)
+    {
+        ReadOnlySpan<char> k = key;
+        int index = k.IndexOf(':');
+        if (index != -1)
+        {
+            // don't trim, paths *could* have lead/trail ws
+            pairValue = new string(k[..index]);
+            subDir = new string(k[(index + 1)..]);
+            return true;
+        }
+        pairValue = null;
+        subDir = null;
+        return false;
     }
 
     private void EnsureNotDisposed()

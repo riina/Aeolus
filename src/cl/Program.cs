@@ -107,12 +107,12 @@ var projectListCommand = new Command("list", "List projects");
 var projectListCommandHandler = CommandHandler.Create(async () =>
 {
     var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
-    var uniqueMap = instance.CreateUnambiguousRootNameMap();
+    var uniqueMap = instance.CreateUnambiguousProjectDirectoryAliases();
     foreach (var project in instance.Db.ProjectDirectoryProjects)
     {
         StringBuilder sb = new();
         if (project.Nickname is { } nick) sb.Append('\"').Append(nick).Append("\" ");
-        sb.Append(CultureInfo.InvariantCulture, $"[{uniqueMap[project.ProjectDirectory.FullPath]}]{instance.GetRelativePathInProjectFolder(project)} ({instance.GetPlatformName(project)} {instance.GetDisplayFramework(project)})");
+        sb.Append(CultureInfo.InvariantCulture, $"{instance.GetShorthand(project, uniqueMap)} ({instance.GetPlatformName(project)} {instance.GetDisplayFramework(project)})");
         Console.WriteLine(sb.ToString());
     }
 });
@@ -129,13 +129,11 @@ var xCommand = new Command("x", "Launch project") { projectLaunchProjectArgument
 var projectLaunchCommandHandler = CommandHandler.Create(async (string project, bool interactive) =>
 {
     var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
-    BaseProjectModel? toLaunch;
-    string fullPath = Path.GetFullPath(project);
-    toLaunch = instance.Db.ProjectDirectoryProjects.FirstOrDefault(v => v.Nickname == project);
-    toLaunch ??= await instance.Db.ProjectDirectoryProjects.FindAsync(fullPath);
+    var map = instance.CreateUnambiguousProjectDirectoryAliases();
+    BaseProjectModel? toLaunch = await instance.FindProjectAsync(project, map);
     if (toLaunch == null)
     {
-        Console.WriteLine($"Project with path or nickname \"{project}\" not found");
+        Console.WriteLine($"Project with nickname, shorthand, or path \"{project}\" not found");
         return 1;
     }
     var result = await instance.LoadAsync(toLaunch);
