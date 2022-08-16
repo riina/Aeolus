@@ -16,6 +16,8 @@ Scan project folder:
 
 `cl folder scan /Users/me/wkspaces`
 
+`cl s /Users/me/wkspaces`
+
 Scan all project folders:
 
 `cl folder scan`
