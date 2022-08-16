@@ -120,7 +120,8 @@ projectCommand.Add(projectRecentCommand);
 var projectLaunchProjectArgument = new Argument<string>("project", description: "Target project path or nick");
 var projectLaunchInteractiveOption = new Option<bool>("--interactive", "Allow interactive remediations");
 var projectLaunchCommand = new Command("launch", "Launch project") { projectLaunchProjectArgument, projectLaunchInteractiveOption };
-projectLaunchCommand.Handler = CommandHandler.Create(async (string project, bool interactive) =>
+var xCommand = new Command("x", "Launch project") { projectLaunchProjectArgument, projectLaunchInteractiveOption };
+var projectLaunchCommandHandler = CommandHandler.Create(async (string project, bool interactive) =>
 {
     var instance = await CLInstance.CreateAsync(GetConfiguration());
     BaseProjectModel? toLaunch;
@@ -200,7 +201,10 @@ projectLaunchCommand.Handler = CommandHandler.Create(async (string project, bool
         return 2;
     }
 });
+projectLaunchCommand.Handler = projectLaunchCommandHandler;
+xCommand.Handler = projectLaunchCommandHandler;
 projectCommand.Add(projectLaunchCommand);
+rootCommand.Add(xCommand);
 // project nick
 var projectNickProjectArgument = new Argument<string>("project", description: "Target project path");
 var projectNickNickArgument = new Argument<string>("nick", description: "Nickname to set");
