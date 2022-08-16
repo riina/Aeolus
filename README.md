@@ -12,17 +12,25 @@ Add a project folder:
 
 `cl folder add /Users/me/wkspaces`
 
-Refresh project database for specific folder:
+Scan project folder:
 
-`cl folder refresh /Users/me/wkspaces`
+`cl folder scan /Users/me/wkspaces`
 
-Refresh project database for all folders:
+Scan all project folders:
 
-`cl folder refresh`
+`cl folder scan`
+
+`cl s`
 
 List projects:
 
 `cl project list`
+
+List recent projects:
+
+`cl project recent`
+
+`cl r`
 
 Nickname project:
 

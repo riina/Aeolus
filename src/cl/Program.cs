@@ -60,10 +60,10 @@ folderListCommand.Handler = CommandHandler.Create(async (bool total) =>
     }
 });
 folderCommand.Add(folderListCommand);
-// folder refresh
-var folderRefreshPathsArgument = new Argument<string[]>("paths", description: "Target paths");
-var folderRefreshCommand = new Command("refresh", "Refresh projects") { verboseOption, folderRefreshPathsArgument };
-folderRefreshCommand.Handler = CommandHandler.Create(async (bool verbose, string[] paths) =>
+// folder scan
+var folderScanPathsArgument = new Argument<string[]>("paths", description: "Target paths");
+var folderScanCommand = new Command("scan", "(re)scan project folder for projects") { verboseOption, folderScanPathsArgument };
+var folderScanCommandHandler = CommandHandler.Create(async (bool verbose, string[] paths) =>
 {
     var instance = await CLInstance.CreateAsync(GetConfiguration());
     if (paths.Length == 0)
@@ -84,7 +84,11 @@ folderRefreshCommand.Handler = CommandHandler.Create(async (bool verbose, string
             }
         }
 });
-folderCommand.Add(folderRefreshCommand);
+folderScanCommand.Handler = folderScanCommandHandler;
+folderCommand.Add(folderScanCommand);
+var sCommand = new Command("s", "(re)scan project folder for projects") { verboseOption, folderScanPathsArgument };
+sCommand.Handler = folderScanCommandHandler;
+rootCommand.Add(sCommand);
 // project
 var projectCommand = new Command("project", "Manage projects");
 rootCommand.Add(projectCommand);
@@ -104,7 +108,7 @@ projectListCommand.Handler = CommandHandler.Create(async () =>
 projectCommand.Add(projectListCommand);
 // project recent
 var projectRecentCommand = new Command("recent", "List recent projects");
-projectRecentCommand.Handler = CommandHandler.Create(async () =>
+var projectRecentCommandHandler = CommandHandler.Create(async () =>
 {
     var instance = await CLInstance.CreateAsync(GetConfiguration());
     foreach (var project in instance.Db.RecentProjects.OrderByDescending(v => v.OpenedTime))
@@ -115,7 +119,11 @@ projectRecentCommand.Handler = CommandHandler.Create(async () =>
         Console.WriteLine(sb.ToString());
     }
 });
+projectRecentCommand.Handler = projectRecentCommandHandler;
 projectCommand.Add(projectRecentCommand);
+var rCommand = new Command("r", "List recent projects");
+rCommand.Handler = projectRecentCommandHandler;
+rootCommand.Add(rCommand);
 // project launch
 var projectLaunchProjectArgument = new Argument<string>("project", description: "Target project path or nick");
 var projectLaunchInteractiveOption = new Option<bool>("--interactive", "Allow interactive remediations");
