@@ -3,8 +3,8 @@ using CrossLaunch.Models;
 
 namespace CrossLaunch.Unity;
 
-// TODO switch to an implementation seeking project file first
-public class UnitySupport : FolderProjectEvaluatorBase
+// maybe switch to an implementation seeking project file first?
+public class UnitySupport : FolderSupportBase<UnityProjectLoader>
 {
     private static readonly Regex s_projectVersionRegex = new(@"m_EditorVersionWithRevision:\s*(?<EditorVersion>\S+)\s*\((?<Revision>\S+)\)");
 
@@ -14,34 +14,21 @@ public class UnitySupport : FolderProjectEvaluatorBase
     {
         string projectFile = Path.Combine(path, "ProjectSettings", "ProjectVersion.txt");
         if (!File.Exists(projectFile)) return null;
-        string projectFileContent = await File.ReadAllTextAsync(projectFile, cancellationToken);
-        if (s_projectVersionRegex.Match(projectFileContent) is not { Success: true } match) return null;
-        return new EvaluatedProject(Path.GetFullPath(path), $"{match.Groups["EditorVersion"]}/{match.Groups["Revision"]}");
+        return s_projectVersionRegex.Match(await File.ReadAllTextAsync(projectFile, cancellationToken)) is { Success: true } match
+            ? new EvaluatedProject(Path.GetFullPath(path), $"{match.Groups["EditorVersion"]}/{match.Groups["Revision"]}")
+            : null;
     }
 
-    public override IProjectLoader GetProjectLoader() => new UnityProjectLoader();
-
-    public override string GetDisplayFramework(BaseProjectModel project)
-    {
-        try
-        {
-            var unityVersion = UnityVersion.FromCombined(project.Framework);
-            return unityVersion.EditorVersion;
-        }
-        catch
-        {
-            return project.Framework;
-        }
-    }
+    public override string GetDisplayFramework(BaseProjectModel project) =>
+        UnityVersion.TryParseFromCombined(project.Framework, out var unityVersion) ? unityVersion.EditorVersion : project.Framework;
 }
 
-public class UnityProjectLoader : IProjectLoader
+public class UnityProjectLoader : SynchronousProjectLoader
 {
-    public Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project) => Task.FromResult(TryLoad(project));
-
-    public ProjectLoadResult TryLoad(BaseProjectModel project)
+    public override ProjectLoadResult TryLoad(BaseProjectModel project)
     {
-        var version = UnityVersion.FromCombined(project.Framework);
+        if (!UnityVersion.TryParseFromCombined(project.Framework, out var version))
+            return ProjectLoadResult.Failure("Invalid Framework ID", $"Could not process framework ID \"{project.Framework}\"");
         string[] searchLocations;
         string[] hubLocations;
         if (OperatingSystem.IsWindows())
@@ -57,7 +44,7 @@ public class UnityProjectLoader : IProjectLoader
             searchLocations = new[] { Path.Combine("/Applications/Unity/Hub/Editor", version.EditorVersion, editorFormat) };
             hubLocations = new[] { "/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" };
         }
-        else return new ProjectLoadResult(false, new ProjectLoadFailInfo("Unsupported OS", "This operating system is not supported", Array.Empty<ProjectLoadFailRemediation>()));
+        else return ProjectLoadResult.Failure("Unsupported OS", "This operating system is not supported");
         string? first = searchLocations.FirstOrDefault(File.Exists);
         if (first == null)
         {
@@ -74,21 +61,24 @@ Warning: Due to unityhub:// link limitations and Unity Hub limitations, Apple Si
             remediations.Add(new ProjectLoadFailRemediation("Open Unity Download Archive", $"Open the Unity Download Archive in a browser and install Unity Editor {version.EditorVersion}.", ProcessUtils.GetUriCallback("https://unity3d.com/get-unity/download/archive")));
             if (hubLocations.Any(File.Exists))
                 remediations.Insert(0, new ProjectLoadFailRemediation("Open Unity Hub", $"Open Unity Hub with Unity Editor {version.EditorVersion} selected for install.", ProcessUtils.GetUriCallback($"unityhub://{version.EditorVersion}/{version.Revision}")));
-            return new ProjectLoadResult(false, new ProjectLoadFailInfo($"Editor {version.EditorVersion} Not Installed", message, remediations.ToArray()));
+            return ProjectLoadResult.Failure($"Editor {version.EditorVersion} Not Installed", message, remediations.ToArray());
         }
         ProcessUtils.Start(first, "-projectPath", project.FullPath);
-        return new ProjectLoadResult(true, null);
+        return ProjectLoadResult.Successful;
     }
 }
 
 internal readonly record struct UnityVersion(string EditorVersion, string Revision)
 {
-    public static UnityVersion FromCombined(string combined)
+    public static bool TryParseFromCombined(string combined, out UnityVersion parsed)
     {
         int index = combined.LastIndexOf('/');
-        if (index == -1) throw new ArgumentException("Invalid combined format");
-        return new UnityVersion(combined[..index], combined[(index + 1)..]);
+        if (index == -1)
+        {
+            parsed = default;
+            return false;
+        }
+        parsed = new UnityVersion(combined[..index], combined[(index + 1)..]);
+        return true;
     }
-
-    public string Combined => $"{EditorVersion}/{Revision}";
 }

@@ -67,9 +67,7 @@ public sealed class CLInstance : IDisposable
     public Task<ProjectLoadResult> LoadAsync(BaseProjectModel projectModel)
     {
         var evaluator = GetProjectEvaluator(projectModel);
-        if (evaluator == null)
-            // TODO add descriptive fail info for failing to get evaluator
-            return Task.FromResult(new ProjectLoadResult(false, new ProjectLoadFailInfo("TODO", "TODO", Array.Empty<ProjectLoadFailRemediation>())));
+        if (evaluator == null) return Task.FromResult(ProjectLoadResult.Failure("Indecipherable Project", "This project is of an unknown type and cannot be opened"));
         var loader = evaluator.GetProjectLoader();
         return loader.TryLoadAsync(projectModel);
     }

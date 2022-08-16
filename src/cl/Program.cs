@@ -227,7 +227,6 @@ projectUnnickCommand.Handler = CommandHandler.Create(async (string project) =>
     }
 });
 projectCommand.Add(projectUnnickCommand);
-// TODO commands
 return await rootCommand.InvokeAsync(args);
 
 static CLConfiguration GetConfiguration() => new() { Evaluators = new IProjectEvaluator[] { new UnitySupport() }, MaxRecentProjects = 10, MaxDepth = 2 };
