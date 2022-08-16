@@ -30,4 +30,10 @@ public static class ProcessUtils
     {
         return Process.Start(GetStartInfo(exe, args))!;
     }
+
+    public static Func<Task> GetUriCallback(string uri) => () =>
+    {
+        ProcessUtils.StartUri(uri);
+        return Task.CompletedTask;
+    };
 }
