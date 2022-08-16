@@ -7,8 +7,7 @@ using System.Text.Json;
 using cl;
 using CrossLaunch;
 using CrossLaunch.Models;
-using CrossLaunch.Unity;
-
+using CrossLaunch.Ubiquitous;
 
 var rootCommand = new RootCommand();
 var verboseOption = new Option<bool>("--verbose", "Enable verbose output");
@@ -301,7 +300,8 @@ return await rootCommand.InvokeAsync(args);
 
 static async Task<CLConfiguration> GetConfigurationAsync()
 {
-    var cfg = new CLConfiguration { Evaluators = new IProjectEvaluator[] { new UnitySupport() }, MaxRecentProjects = 10, MaxDepth = 2 };
+    var evaluators = TypeTool.CreateInstances<IProjectEvaluator>(TypeTool.GetConcreteInterfaceImplementors<IProjectEvaluator>(typeof(Anchor9)));
+    var cfg = new CLConfiguration { Evaluators = evaluators, MaxRecentProjects = 10, MaxDepth = 2 };
     string cfgFile = Path.Combine(CLFiles.DataDirectory, "clconfig.json");
     if (!File.Exists(cfgFile))
     {

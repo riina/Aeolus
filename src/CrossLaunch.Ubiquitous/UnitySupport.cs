@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using CrossLaunch.Models;
 
-namespace CrossLaunch.Unity;
+namespace CrossLaunch.Ubiquitous;
 
 // maybe switch to an implementation seeking project file first?
 public class UnitySupport : FolderSupportBase<UnityProjectLoader>

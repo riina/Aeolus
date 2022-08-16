@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossLaunch.Tests", "CrossL
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cl", "cl\cl.csproj", "{1FDE5405-269E-46E3-ADF2-9DF7F2F143F0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossLaunch.Unity", "CrossLaunch.Unity\CrossLaunch.Unity.csproj", "{1DAE415B-D23B-40F2-BFBA-51579D4DFF82}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossLaunch.Ubiquitous", "CrossLaunch.Ubiquitous\CrossLaunch.Ubiquitous.csproj", "{1DAE415B-D23B-40F2-BFBA-51579D4DFF82}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
