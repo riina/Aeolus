@@ -51,15 +51,29 @@ public class VisualStudioProjectLoader : IProjectLoader
             return Task.FromResult(ProjectLoadResult.InvalidFile);
         }
         var remediations = new List<ProjectLoadFailRemediation>();
-        if (configuration.TryGetFlag("visualstudio.rider.enable", out bool riderEnabled))
+        if (configuration.TryGetFlag("visualstudio.rider.enable", out _))
         {
             // TODO check projects for rider compat (just check Sdk), try loading if valid
             remediations.Add(new ProjectLoadFailRemediation("Get JetBrains Rider", @"Install JetBrains Rider, a feature-rich proprietary IDE primarily for .NET development.
 https://www.jetbrains.com/rider/", ProcessUtils.GetUriCallback("https://www.jetbrains.com/rider/")));
         }
-        if (configuration.TryGetFlag("visualstudio.vscode.enable", out bool vscodeEnabled))
+        if (configuration.TryGetFlag("visualstudio.vscode.enable", out _))
         {
-            // TODO try loading through vscode
+            string? exePath = null;
+            if (OperatingSystem.IsMacOS())
+            {
+                exePath = FSUtil.IfFileExists("/Applications/Visual Studio Code.app/Contents/MacOS/Electron");
+            }
+            else if (OperatingSystem.IsWindows())
+            {
+                string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+                exePath = FSUtil.IfFileExists(Path.Combine(programFiles, "Microsoft VS Code", "Code.exe"));
+            }
+            if (exePath != null)
+            {
+                ProcessUtils.Start(exePath, Path.GetDirectoryName(project.FullPath) ?? "");
+                return Task.FromResult(ProjectLoadResult.Successful);
+            }
             remediations.Add(new ProjectLoadFailRemediation("Get Visual Studio Code", @"Install Visual Studio Code from Microsoft Corporation, a lightweight proprietary code editor.
 https://code.visualstudio.com/", ProcessUtils.GetUriCallback("https://code.visualstudio.com/")));
         }
