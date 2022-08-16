@@ -151,12 +151,15 @@ projectLaunchCommand.Handler = CommandHandler.Create(async (string project, bool
                 Console.WriteLine();
                 Console.WriteLine("## Options ##");
                 Console.WriteLine();
-                Console.WriteLine("0: Quit");
-                Console.WriteLine();
+                if (interactive)
+                {
+                    Console.WriteLine("0: Quit");
+                    Console.WriteLine();
+                }
                 for (int i = 0; i < failInfo.Remediations.Length; i++)
                 {
                     ProjectLoadFailRemediation remediation = failInfo.Remediations[i];
-                    Console.WriteLine($"{i + 1}: {remediation.ActionShortName}");
+                    Console.WriteLine(interactive ? $"{i + 1}: {remediation.ActionShortName}" : $"-- {remediation.ActionShortName}");
                     Console.WriteLine(remediation.ActionDescription);
                     Console.WriteLine();
                 }
