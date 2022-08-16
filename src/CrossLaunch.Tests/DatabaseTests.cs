@@ -240,6 +240,8 @@ public class DatabaseTests
             string fullPath = Path.GetFullPath(path);
             return _evaluatedProjects.Values.Where(v => PathContainsParakeet(fullPath, v.FullPath)).AsAsyncEnumerable();
         }
+
+        public IProjectLoader GetProjectLoader() => throw new NotImplementedException();
     }
 
     private static bool PathContainsParakeet(string root, string sub)

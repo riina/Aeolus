@@ -9,6 +9,8 @@ public abstract class ProjectEvaluatorBase : IProjectEvaluator
     public abstract Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default);
 
     public abstract IAsyncEnumerable<EvaluatedProject> FindProjectsAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default);
+
+    public abstract IProjectLoader GetProjectLoader();
 }
 
 public abstract class FolderProjectEvaluatorBase : ProjectEvaluatorBase
