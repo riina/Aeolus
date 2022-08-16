@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CrossLaunch;
 
-public static class ProjectUtil
+public static class CLContextBaseExtensions
 {
     public static async Task<ProjectDirectoryModel> AddProjectDirectoryAsync(this CLContextBase context, ProjectDirectoryModel projectDirectory)
     {
@@ -42,6 +42,7 @@ public static class ProjectUtil
         {
             existing.ProjectEvaluatorType = recentProject.ProjectEvaluatorType;
             existing.Framework = recentProject.Framework;
+            existing.Nickname = recentProject.Nickname;
             result = existing;
             context.RecentProjects.Update(existing);
         }
@@ -78,18 +79,19 @@ public static class ProjectUtil
                 await foreach (var x in evaluator.FindProjectsAsync(projectDirectory, configuration).ConfigureAwait(false))
                 {
                     ProjectDirectoryProjectModel? project = await context.ProjectDirectoryProjects.FindAsync(x.FullPath).ConfigureAwait(false);
+                    bool created;
                     if (project == null)
                     {
                         project = new ProjectDirectoryProjectModel { FullPath = x.FullPath };
+                        created = true;
                     }
+                    else created = false;
                     project.ProjectDirectory = directory;
                     project.ProjectEvaluatorType = evaluatorType;
                     project.Framework = x.Framework;
                     project.RecordUpdateTime = recordUpdateTime;
-                    string key = project.FullPath;
-                    if (await context.ProjectDirectoryProjects.AnyAsync(v => v.FullPath == key).ConfigureAwait(false))
-                        context.ProjectDirectoryProjects.Update(project);
-                    else context.ProjectDirectoryProjects.Add(project);
+                    if (created) context.ProjectDirectoryProjects.Add(project);
+                    else context.ProjectDirectoryProjects.Update(project);
                 }
             }
         }
