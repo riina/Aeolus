@@ -30,35 +30,58 @@ public sealed class CLInstance : IDisposable
 
     public readonly record struct DirectoryAddResult(bool Success, ProjectDirectoryModel Model);
 
-    public async Task<DirectoryAddResult> AddDirectoryAsync(string directory)
+    public Task<DirectoryAddResult> AddDirectoryAsync(string directory)
+    {
+        EnsureNotDisposed();
+        return AddDirectoryInternalAsync(directory);
+    }
+
+    private async Task<DirectoryAddResult> AddDirectoryInternalAsync(string directory)
     {
         var v = new ProjectDirectoryModel { FullPath = Path.GetFullPath(directory), Projects = new HashSet<ProjectDirectoryProjectModel>(), RecordUpdateTime = DateTime.Now };
         var result = await Db.AddProjectDirectoryAsync(v);
         return new DirectoryAddResult(ReferenceEquals(v, result), result);
     }
 
-    public async Task<bool> RemoveDirectoryAsync(string directory)
+    public Task<bool> RemoveDirectoryAsync(string directory)
     {
-        return await Db.RemoveProjectDirectoryAsync(new ProjectDirectoryModel { FullPath = Path.GetFullPath(directory), Projects = new HashSet<ProjectDirectoryProjectModel>(), RecordUpdateTime = DateTime.Now });
+        EnsureNotDisposed();
+        return Db.RemoveProjectDirectoryAsync(new ProjectDirectoryModel { FullPath = Path.GetFullPath(directory), Projects = new HashSet<ProjectDirectoryProjectModel>(), RecordUpdateTime = DateTime.Now });
     }
 
-    public async Task UpdateDirectoryAsync(ProjectDirectoryModel directory)
+    public Task UpdateDirectoryAsync(ProjectDirectoryModel directory)
     {
-        await Db.UpdateProjectDirectoryProjectListAsync(directory, Configuration, Configuration.Evaluators);
+        EnsureNotDisposed();
+        return Db.UpdateProjectDirectoryProjectListAsync(directory, Configuration, Configuration.Evaluators);
     }
 
-    public async Task UpdateAllDirectoriesAsync()
+    public Task UpdateAllDirectoriesAsync()
+    {
+        EnsureNotDisposed();
+        return UpdateAllDirectoriesInternalAsync();
+    }
+
+    private async Task UpdateAllDirectoriesInternalAsync()
     {
         foreach (var dir in Db.ProjectDirectories.ToList())
             await Db.UpdateProjectDirectoryProjectListAsync(dir, Configuration, Configuration.Evaluators);
     }
 
-    public Task<RecentProjectModel> PushRecentProjectAsync(RecentProjectModel recentProject) => Db.PushRecentProjectAsync(Configuration, recentProject);
+    public Task<RecentProjectModel> PushRecentProjectAsync(RecentProjectModel recentProject)
+    {
+        EnsureNotDisposed();
+        return Db.PushRecentProjectAsync(Configuration, recentProject);
+    }
 
-    public Task<RecentProjectModel> PushRecentProjectAsync(BaseProjectModel project) => Db.PushRecentProjectAsync(Configuration, project);
+    public Task<RecentProjectModel> PushRecentProjectAsync(BaseProjectModel project)
+    {
+        EnsureNotDisposed();
+        return Db.PushRecentProjectAsync(Configuration, project);
+    }
 
     public IProjectEvaluator? GetProjectEvaluator(BaseProjectModel project)
     {
+        EnsureNotDisposed();
         var typeString = TypeTool.ParseTypeString(project.ProjectEvaluatorType);
         var type = typeString.Load();
         return _typeMap.TryGetValue(type, out var evaluator) ? evaluator : null;
@@ -66,6 +89,7 @@ public sealed class CLInstance : IDisposable
 
     public Task<ProjectLoadResult> LoadAsync(BaseProjectModel projectModel)
     {
+        EnsureNotDisposed();
         var evaluator = GetProjectEvaluator(projectModel);
         if (evaluator == null) return Task.FromResult(ProjectLoadResult.Failure("Indecipherable Project", "This project is of an unknown type and cannot be opened"));
         var loader = evaluator.GetProjectLoader();
@@ -74,11 +98,13 @@ public sealed class CLInstance : IDisposable
 
     public string GetPlatformName(BaseProjectModel project)
     {
+        EnsureNotDisposed();
         return GetProjectEvaluator(project)?.FriendlyPlatformName ?? "unknown";
     }
 
     public string GetDisplayFramework(BaseProjectModel project)
     {
+        EnsureNotDisposed();
         return GetProjectEvaluator(project)?.GetDisplayFramework(project) ?? project.Framework;
     }
 

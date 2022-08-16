@@ -1,7 +1,9 @@
-﻿using System.CommandLine;
+﻿using System.Collections.Immutable;
+using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using cl;
 using CrossLaunch;
 using CrossLaunch.Models;
@@ -19,7 +21,7 @@ var folderAddPathsArgument = new Argument<string[]>("paths", description: "Targe
 var folderAddCommand = new Command("add", "Add project folders") { folderAddPathsArgument };
 folderAddCommand.Handler = CommandHandler.Create(async (string[] paths) =>
 {
-    var instance = await CLInstance.CreateAsync(GetConfiguration());
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
     foreach (string path in paths.Select(Path.GetFullPath))
     {
         if (!Directory.Exists(path))
@@ -38,7 +40,7 @@ var folderRemovePathsArgument = new Argument<string[]>("paths", description: "Ta
 var folderRemoveCommand = new Command("remove", "Remove project folders") { folderRemovePathsArgument };
 folderRemoveCommand.Handler = CommandHandler.Create(async (string[] paths) =>
 {
-    var instance = await CLInstance.CreateAsync(GetConfiguration());
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
     foreach (string path in paths.Select(Path.GetFullPath))
     {
         bool removed = await instance.RemoveDirectoryAsync(path);
@@ -51,7 +53,7 @@ var folderListTotalCommand = new Option<bool>("--total", "Show total project cou
 var folderListCommand = new Command("list", "List project folders") { folderListTotalCommand };
 folderListCommand.Handler = CommandHandler.Create(async (bool total) =>
 {
-    var instance = await CLInstance.CreateAsync(GetConfiguration());
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
     foreach (var folder in instance.Db.ProjectDirectories)
     {
         Console.WriteLine(total
@@ -65,7 +67,7 @@ var folderScanPathsArgument = new Argument<string[]>("paths", description: "Targ
 var folderScanCommand = new Command("scan", "(re)scan project folder for projects") { verboseOption, folderScanPathsArgument };
 var folderScanCommandHandler = CommandHandler.Create(async (bool verbose, string[] paths) =>
 {
-    var instance = await CLInstance.CreateAsync(GetConfiguration());
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
     if (paths.Length == 0)
     {
         await instance.UpdateAllDirectoriesAsync();
@@ -96,7 +98,7 @@ rootCommand.Add(projectCommand);
 var projectListCommand = new Command("list", "List projects");
 var projectListCommandHandler = CommandHandler.Create(async () =>
 {
-    var instance = await CLInstance.CreateAsync(GetConfiguration());
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
     foreach (var project in instance.Db.ProjectDirectoryProjects)
     {
         StringBuilder sb = new();
@@ -114,7 +116,7 @@ rootCommand.Add(lCommand);
 var projectRecentCommand = new Command("recent", "List recent projects");
 var projectRecentCommandHandler = CommandHandler.Create(async () =>
 {
-    var instance = await CLInstance.CreateAsync(GetConfiguration());
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
     foreach (var project in instance.Db.RecentProjects.OrderByDescending(v => v.OpenedTime))
     {
         StringBuilder sb = new();
@@ -135,7 +137,7 @@ var projectLaunchCommand = new Command("launch", "Launch project") { projectLaun
 var xCommand = new Command("x", "Launch project") { projectLaunchProjectArgument, projectLaunchInteractiveOption };
 var projectLaunchCommandHandler = CommandHandler.Create(async (string project, bool interactive) =>
 {
-    var instance = await CLInstance.CreateAsync(GetConfiguration());
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
     BaseProjectModel? toLaunch;
     string fullPath = Path.GetFullPath(project);
     toLaunch = instance.Db.ProjectDirectoryProjects.FirstOrDefault(v => v.Nickname == project);
@@ -223,7 +225,7 @@ var projectNickNickArgument = new Argument<string>("nick", description: "Nicknam
 var projectNickCommand = new Command("nick", "Set project nickname") { projectNickProjectArgument, projectNickNickArgument };
 projectNickCommand.Handler = CommandHandler.Create(async (string project, string nick) =>
 {
-    var instance = await CLInstance.CreateAsync(GetConfiguration());
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
     BaseProjectModel? toNick = await instance.Db.ProjectDirectoryProjects.FindAsync(Path.GetFullPath(project));
     if (toNick != null)
     {
@@ -237,7 +239,7 @@ var projectUnnickProjectArgument = new Argument<string>("project", description: 
 var projectUnnickCommand = new Command("unnick", "Unset project nickname") { projectUnnickProjectArgument };
 projectUnnickCommand.Handler = CommandHandler.Create(async (string project) =>
 {
-    var instance = await CLInstance.CreateAsync(GetConfiguration());
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
     BaseProjectModel? toNick = await instance.Db.ProjectDirectoryProjects.FindAsync(Path.GetFullPath(project));
     if (toNick != null)
     {
@@ -248,4 +250,20 @@ projectUnnickCommand.Handler = CommandHandler.Create(async (string project) =>
 projectCommand.Add(projectUnnickCommand);
 return await rootCommand.InvokeAsync(args);
 
-static CLConfiguration GetConfiguration() => new() { Evaluators = new IProjectEvaluator[] { new UnitySupport() }, MaxRecentProjects = 10, MaxDepth = 2 };
+static async Task<CLConfiguration> GetConfigurationAsync()
+{
+    var cfg = new CLConfiguration { Evaluators = new IProjectEvaluator[] { new UnitySupport() }, MaxRecentProjects = 10, MaxDepth = 2 };
+    string cfgFile = Path.Combine(CLFiles.DataDirectory, "clconfig.json");
+    if (!File.Exists(cfgFile))
+    {
+        Directory.CreateDirectory(CLFiles.DataDirectory);
+        await using var stream = File.Create(cfgFile);
+        await CLConfiguration.SerializeOptionsAsync(ImmutableDictionary<string, JsonElement>.Empty, stream);
+    }
+    else
+    {
+        await using var stream = File.OpenRead(cfgFile);
+        cfg.Options = await CLConfiguration.LoadOptionsAsync(stream);
+    }
+    return cfg;
+}
