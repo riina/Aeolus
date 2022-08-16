@@ -11,7 +11,23 @@ public class CLContextFactory : IDesignTimeDbContextFactory<CLContext>
     public CLContext CreateDbContext(string[] args)
     {
         var ob = new DbContextOptionsBuilder<CLContext>();
-        ob.UseSqlite("Data Source=cl.db;",
+        string dir;
+        if (OperatingSystem.IsMacOS())
+        {
+            // .config
+            dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify), "CrossLaunchCL");
+        }
+        else if (OperatingSystem.IsWindows())
+        {
+            // AppData/Roaming
+            dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify), "CrossLaunchCL");
+        }
+        else
+        {
+            dir = Environment.CurrentDirectory;
+        }
+        Directory.CreateDirectory(dir);
+        ob.UseSqlite(@$"Data Source=""{Path.Combine(dir, "cl.db")}"";",
             b => b.MigrationsAssembly(MigrationAssembly.FullName));
         ob.UseLazyLoadingProxies();
         return new CLContext(ob.Options);
