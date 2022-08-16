@@ -242,6 +242,7 @@ public class DatabaseTests
         }
 
         public IProjectLoader GetProjectLoader() => throw new NotImplementedException();
+        public string GetDisplayFramework(BaseProjectModel project) => project.Framework;
     }
 
     private static bool PathContainsParakeet(string root, string sub)

@@ -67,7 +67,7 @@ public static class CLContextBaseExtensions
         await PushRecentProjectAsync(context, configuration, recentProject).ConfigureAwait(false);
     }
 
-    public static async Task UpdateProjectDirectoryProjectListAsync(this CLContextBase context, ProjectDirectoryModel directory, CLConfiguration configuration, IReadOnlyList<IProjectEvaluator> evaluators)
+    public static async Task UpdateProjectDirectoryProjectListAsync(this CLContextBase context, ProjectDirectoryModel directory, CLConfiguration configuration, IReadOnlyCollection<IProjectEvaluator> evaluators)
     {
         string projectDirectory = directory.FullPath;
         DateTime recordUpdateTime = DateTime.Now;

@@ -1,3 +1,5 @@
+using CrossLaunch.Models;
+
 namespace CrossLaunch;
 
 public interface IProjectEvaluator
@@ -9,4 +11,6 @@ public interface IProjectEvaluator
     IAsyncEnumerable<EvaluatedProject> FindProjectsAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default);
 
     IProjectLoader GetProjectLoader();
+
+    string GetDisplayFramework(BaseProjectModel project);
 }

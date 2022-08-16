@@ -20,6 +20,19 @@ public class UnitySupport : FolderProjectEvaluatorBase
     }
 
     public override IProjectLoader GetProjectLoader() => new UnityProjectLoader();
+
+    public override string GetDisplayFramework(BaseProjectModel project)
+    {
+        try
+        {
+            var unityVersion = UnityVersion.FromCombined(project.Framework);
+            return unityVersion.EditorVersion;
+        }
+        catch
+        {
+            return project.Framework;
+        }
+    }
 }
 
 public class UnityProjectLoader : IProjectLoader
