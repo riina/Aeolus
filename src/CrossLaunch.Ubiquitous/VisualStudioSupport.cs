@@ -8,78 +8,30 @@ public class VisualStudioSupport : FileSupportBase<VisualStudioProjectLoader>
 {
     public override string FriendlyPlatformName => "Visual Studio";
 
-    public override async Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default)
+    public override Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default)
     {
-        if (!".sln".Equals(Path.GetExtension(path), StringComparison.InvariantCultureIgnoreCase)) return null;
-        return EvaluateProject(path, await File.ReadAllLinesAsync(path, cancellationToken));
+        return Task.FromResult(".sln".Equals(Path.GetExtension(path), StringComparison.InvariantCultureIgnoreCase) ? EvaluateProject(path) : null);
     }
 
-    private EvaluatedProject? EvaluateProject(string path, string[] projectFile)
+    private static EvaluatedProject? EvaluateProject(string path)
     {
-        int i;
-        for (i = 0; i < projectFile.Length; i++)
+        try
         {
-            if (projectFile[i].StartsWith("Microsoft Visual Studio Solution File")) break;
-        }
-        if (i == projectFile.Length) return null;
-        ReadOnlySpan<char> visualStudioVersion = ReadOnlySpan<char>.Empty;
-        ReadOnlySpan<char> minimumVisualStudioVersion = ReadOnlySpan<char>.Empty;
-        for (; i < projectFile.Length; i++)
-        {
-            ReadOnlySpan<char> line = projectFile[i];
-            var l = line.TrimStart();
-            if (l.StartsWith("#")) continue;
-            if (TryGetKeyValue(l, "VisualStudioVersion", out var tmpVisualStudioVersion)) visualStudioVersion = tmpVisualStudioVersion;
-            if (TryGetKeyValue(l, "MinimumVisualStudioVersion", out var tmpMinimumVisualStudioVersion)) minimumVisualStudioVersion = tmpMinimumVisualStudioVersion;
-            if (visualStudioVersion.Length != 0 && minimumVisualStudioVersion.Length != 0) break;
-        }
-        if (visualStudioVersion.Length != 0 && minimumVisualStudioVersion.Length != 0)
-        {
+            using var stream = File.OpenText(path);
+            var solution = VSSolutionFile.Load(stream);
             var sb = new StringBuilder();
-            sb.Append(minimumVisualStudioVersion).Append('/').Append(visualStudioVersion);
+            sb.Append(solution.MinimumVisualStudioVersion).Append('/').Append(solution.VisualStudioVersion);
             return new EvaluatedProject(Path.GetFullPath(path), sb.ToString());
         }
-        return null;
-    }
-
-    private static bool TryGetKeyValue(ReadOnlySpan<char> source, ReadOnlySpan<char> pattern, out ReadOnlySpan<char> result)
-    {
-        source = source.TrimStart();
-        if (source.StartsWith(pattern))
+        catch (InvalidDataException)
         {
-            source = source[pattern.Length..].TrimStart();
-            if (source.StartsWith("="))
-            {
-                result = source[1..].Trim();
-                return true;
-            }
+            return null;
         }
-        result = ReadOnlySpan<char>.Empty;
-        return false;
     }
 
     public override string GetDisplayFramework(BaseProjectModel project)
     {
-        return TryGetMinimumVisualStudio(project, out string? result) ? result : project.Framework;
-    }
-
-
-    public static bool TryGetMinimumVisualStudio(BaseProjectModel project, [NotNullWhen(true)] out string? result)
-    {
-        ReadOnlySpan<char> slice = project.Framework;
-        int index = slice.IndexOf('/');
-        if (index != -1)
-        {
-            slice = slice[..index];
-            int index2 = slice.IndexOf('.');
-            if (index2 != -1)
-            {
-                result = new string(slice[..index2]);
-                return true;
-            }
-        }
-        result = null;
-        return false;
+        return VSSolutionFile.TryGetMinimumVisualStudio(project, out string? result) ? result : project.Framework;
     }
 }
 
@@ -87,7 +39,7 @@ public class VisualStudioProjectLoader : IProjectLoader
 {
     public Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration)
     {
-        if (!VisualStudioSupport.TryGetMinimumVisualStudio(project, out string? framework)) return Task.FromResult(ProjectLoadResult.BadFrameworkId(project.Framework));
+        if (!VSSolutionFile.TryGetMinimumVisualStudio(project, out string? framework)) return Task.FromResult(ProjectLoadResult.BadFrameworkId(project.Framework));
         // TODO parse out solution into project references
         var remediations = new List<ProjectLoadFailRemediation>();
         if (configuration.TryGetFlag("visualstudio.rider.enable", out bool riderEnabled))
@@ -117,5 +69,78 @@ https://visualstudio.microsoft.com/vs/mac/", ProcessUtils.GetUriCallback("https:
         return Task.FromResult(ProjectLoadResult.Failure("No Valid Program Found", @"Failed to identify software capable of opening this Visual Studio solution file.
 
 A program such as Visual Studio or Rider must be installed.", remediations.ToArray()));
+    }
+}
+
+public class VSSolutionFile
+{
+    public readonly string MinimumVisualStudioVersion;
+    public readonly string VisualStudioVersion;
+
+    public VSSolutionFile(string minimumVisualStudioVersion, string visualStudioVersion)
+    {
+        MinimumVisualStudioVersion = minimumVisualStudioVersion;
+        VisualStudioVersion = visualStudioVersion;
+    }
+
+    public static VSSolutionFile Load(TextReader reader)
+    {
+        string? readLine;
+        while ((readLine = reader.ReadLine()) != null)
+            if (readLine.StartsWith("Microsoft Visual Studio Solution File"))
+                break;
+        if (readLine == null) throw new InvalidDataException("Missing header");
+        ReadOnlySpan<char> visualStudioVersion = ReadOnlySpan<char>.Empty;
+        ReadOnlySpan<char> minimumVisualStudioVersion = ReadOnlySpan<char>.Empty;
+        while ((readLine = reader.ReadLine()) != null)
+        {
+            ReadOnlySpan<char> line = readLine;
+            var l = line.TrimStart();
+            if (l.StartsWith("#")) continue;
+            if (TryGetKeyValue(l, "VisualStudioVersion", out var tmpVisualStudioVersion)) visualStudioVersion = tmpVisualStudioVersion;
+            if (TryGetKeyValue(l, "MinimumVisualStudioVersion", out var tmpMinimumVisualStudioVersion)) minimumVisualStudioVersion = tmpMinimumVisualStudioVersion;
+            if (visualStudioVersion.Length != 0 && minimumVisualStudioVersion.Length != 0) break;
+        }
+        if (visualStudioVersion.Length != 0 && minimumVisualStudioVersion.Length != 0)
+        {
+            var sb = new StringBuilder();
+            sb.Append(minimumVisualStudioVersion).Append('/').Append(visualStudioVersion);
+            return new VSSolutionFile(new string(minimumVisualStudioVersion), new string(visualStudioVersion));
+        }
+        throw new InvalidDataException("Missing version info");
+    }
+
+    private static bool TryGetKeyValue(ReadOnlySpan<char> source, ReadOnlySpan<char> pattern, out ReadOnlySpan<char> result)
+    {
+        source = source.TrimStart();
+        if (source.StartsWith(pattern))
+        {
+            source = source[pattern.Length..].TrimStart();
+            if (source.StartsWith("="))
+            {
+                result = source[1..].Trim();
+                return true;
+            }
+        }
+        result = ReadOnlySpan<char>.Empty;
+        return false;
+    }
+
+    public static bool TryGetMinimumVisualStudio(BaseProjectModel project, [NotNullWhen(true)] out string? result)
+    {
+        ReadOnlySpan<char> slice = project.Framework;
+        int index = slice.IndexOf('/');
+        if (index != -1)
+        {
+            slice = slice[..index];
+            int index2 = slice.IndexOf('.');
+            if (index2 != -1)
+            {
+                result = new string(slice[..index2]);
+                return true;
+            }
+        }
+        result = null;
+        return false;
     }
 }
