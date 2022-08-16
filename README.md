@@ -32,7 +32,7 @@ List projects:
 
 List recent projects:
 
-`cl project recent`
+`cl recent list`
 
 `cl r`
 
