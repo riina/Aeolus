@@ -9,5 +9,5 @@
   <ItemGroup>
     <ProjectReference Include="../CrossLaunch/CrossLaunch.csproj" />
   </ItemGroup>
-  
+
 </Project>
