@@ -180,6 +180,35 @@ projectLaunchCommand.Handler = CommandHandler.Create(async (string project, bool
     return 0;
 });
 projectCommand.Add(projectLaunchCommand);
+// project nick
+var projectNickProjectArgument = new Argument<string>("project", description: "Target project path");
+var projectNickNickArgument = new Argument<string>("nick", description: "Nickname to set");
+var projectNickCommand = new Command("nick", "Set project nickname") { projectNickProjectArgument, projectNickNickArgument };
+projectNickCommand.Handler = CommandHandler.Create(async (string project, string nick) =>
+{
+    var instance = await CLInstance.CreateAsync(GetConfiguration());
+    BaseProjectModel? toNick = await instance.Db.ProjectDirectoryProjects.FindAsync(Path.GetFullPath(project));
+    if (toNick != null)
+    {
+        toNick.Nickname = nick;
+        await instance.Db.SaveChangesAsync();
+    }
+});
+projectCommand.Add(projectNickCommand);
+// project unnick
+var projectUnnickProjectArgument = new Argument<string>("project", description: "Target project path");
+var projectUnnickCommand = new Command("unnick", "Unset project nickname") { projectUnnickProjectArgument };
+projectUnnickCommand.Handler = CommandHandler.Create(async (string project) =>
+{
+    var instance = await CLInstance.CreateAsync(GetConfiguration());
+    BaseProjectModel? toNick = await instance.Db.ProjectDirectoryProjects.FindAsync(Path.GetFullPath(project));
+    if (toNick != null)
+    {
+        toNick.Nickname = null;
+        await instance.Db.SaveChangesAsync();
+    }
+});
+projectCommand.Add(projectUnnickCommand);
 // TODO commands
 return await rootCommand.InvokeAsync(args);
 

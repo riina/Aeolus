@@ -74,7 +74,7 @@ Warning: Due to unityhub:// link limitations and Unity Hub limitations, Apple Si
             remediations.Add(new ProjectLoadFailRemediation("Open Unity Download Archive", $"Open the Unity Download Archive in a browser and install Unity Editor {version.EditorVersion}.", ProcessUtils.GetUriCallback("https://unity3d.com/get-unity/download/archive")));
             if (hubLocations.Any(File.Exists))
                 remediations.Insert(0, new ProjectLoadFailRemediation("Open Unity Hub", $"Open Unity Hub with Unity Editor {version.EditorVersion} selected for install.", ProcessUtils.GetUriCallback($"unityhub://{version.EditorVersion}/{version.Revision}")));
-            return new ProjectLoadResult(false, new ProjectLoadFailInfo("Editor Not Installed", message, remediations.ToArray()));
+            return new ProjectLoadResult(false, new ProjectLoadFailInfo($"Editor {version.EditorVersion} Not Installed", message, remediations.ToArray()));
         }
         ProcessUtils.Start(first, "-projectPath", project.FullPath);
         return new ProjectLoadResult(true, null);
