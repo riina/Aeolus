@@ -54,7 +54,7 @@ Launch project by path:
 
 Get help:
 
-`cl --help`
+`cl [command] --help`
 
 # CrossLaunch
 
