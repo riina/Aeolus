@@ -44,7 +44,7 @@ public class UnityProjectLoader : IProjectLoader
             searchLocations = new[] { Path.Combine("/Applications/Unity/Hub/Editor", version.EditorVersion, editorFormat) };
             hubLocations = new[] { "/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" };
         }
-        else return new ProjectLoadResult(false, new ProjectLoadFailInfo("Unsupported OS", "This operating system is not supported", null));
+        else return new ProjectLoadResult(false, new ProjectLoadFailInfo("Unsupported OS", "This operating system is not supported", Array.Empty<ProjectLoadFailRemediation>()));
         string? first = searchLocations.FirstOrDefault(File.Exists);
         if (first == null)
         {
@@ -54,11 +54,11 @@ https://unity3d.com/get-unity/download/archive";
             if (OperatingSystem.IsMacOS())
                 message += @"
 Warning: Due to unityhub:// link limitations and Unity Hub limitations, Apple Silicon editors may not be installable except through .dmg images from the Unity Download Archive.";
-            ProjectLoadFailRemediation remediation;
-            remediation = hubLocations.Any(File.Exists)
-                ? new ProjectLoadFailRemediation("Open Unity Hub", "Unity Hub can be opened with the required editor selected for install.", ProcessUtils.GetUriCallback($"unityhub://{version.EditorVersion}/{version.Revision}"))
-                : new ProjectLoadFailRemediation("Open Unity Download Archive", "A browser can be opened and pointed to the Unity Download Archive.", ProcessUtils.GetUriCallback("https://unity3d.com/get-unity/download/archive"));
-            return new ProjectLoadResult(false, new ProjectLoadFailInfo("Editor Not Installed", message, remediation));
+            List<ProjectLoadFailRemediation> remediations = new();
+            remediations.Add(new ProjectLoadFailRemediation("Open Unity Download Archive", "A browser can be opened and pointed to the Unity Download Archive.", ProcessUtils.GetUriCallback("https://unity3d.com/get-unity/download/archive")));
+            if (hubLocations.Any(File.Exists))
+                remediations.Insert(0, new ProjectLoadFailRemediation("Open Unity Hub", "Unity Hub can be opened with the required editor selected for install.", ProcessUtils.GetUriCallback($"unityhub://{version.EditorVersion}/{version.Revision}")));
+            return new ProjectLoadResult(false, new ProjectLoadFailInfo("Editor Not Installed", message, remediations.ToArray()));
         }
         ProcessUtils.Start(first, "-projectPath", project.FullPath);
         return new ProjectLoadResult(true, null);
