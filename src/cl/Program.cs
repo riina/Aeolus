@@ -301,7 +301,7 @@ return await rootCommand.InvokeAsync(args);
 static async Task<CLConfiguration> GetConfigurationAsync()
 {
     var evaluators = TypeTool.CreateInstances<IProjectEvaluator>(TypeTool.GetConcreteInterfaceImplementors<IProjectEvaluator>(typeof(Anchor9)));
-    var cfg = new CLConfiguration { Evaluators = evaluators, MaxRecentProjects = 10, MaxDepth = 2 };
+    var cfg = new CLConfiguration { Evaluators = evaluators, MaxRecentProjects = 10, MaxDepth = 3 };
     string cfgFile = Path.Combine(CLFiles.DataDirectory, "clconfig.json");
     if (!File.Exists(cfgFile))
     {

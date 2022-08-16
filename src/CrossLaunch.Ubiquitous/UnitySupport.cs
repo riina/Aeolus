@@ -25,7 +25,7 @@ public class UnitySupport : FolderSupportBase<UnityProjectLoader>
 
 public class UnityProjectLoader : SynchronousProjectLoader
 {
-    public override ProjectLoadResult TryLoad(BaseProjectModel project)
+    public override ProjectLoadResult TryLoad(BaseProjectModel project, CLConfiguration configuration)
     {
         if (!UnityVersion.TryParseFromCombined(project.Framework, out var version))
             return ProjectLoadResult.Failure("Invalid Framework ID", $"Could not process framework ID \"{project.Framework}\"");

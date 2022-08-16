@@ -4,5 +4,5 @@ namespace CrossLaunch;
 
 public interface IProjectLoader
 {
-    Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project);
+    Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration);
 }

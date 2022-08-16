@@ -93,7 +93,7 @@ public sealed class CLInstance : IDisposable
         var evaluator = GetProjectEvaluator(projectModel);
         if (evaluator == null) return Task.FromResult(ProjectLoadResult.Failure("Indecipherable Project", "This project is of an unknown type and cannot be opened"));
         var loader = evaluator.GetProjectLoader();
-        return loader.TryLoadAsync(projectModel);
+        return loader.TryLoadAsync(projectModel, Configuration);
     }
 
     public string GetPlatformName(BaseProjectModel project)

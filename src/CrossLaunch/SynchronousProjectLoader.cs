@@ -4,7 +4,8 @@ namespace CrossLaunch;
 
 public abstract class SynchronousProjectLoader : IProjectLoader
 {
-    public Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project) => Task.FromResult(TryLoad(project));
+    public Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration)
+        => Task.FromResult(TryLoad(project, configuration));
 
-    public abstract ProjectLoadResult TryLoad(BaseProjectModel project);
+    public abstract ProjectLoadResult TryLoad(BaseProjectModel project, CLConfiguration configuration);
 }
