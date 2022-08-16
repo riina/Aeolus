@@ -13,6 +13,7 @@ public class CLContextFactory : IDesignTimeDbContextFactory<CLContext>
         var ob = new DbContextOptionsBuilder<CLContext>();
         ob.UseSqlite("Data Source=cl.db;",
             b => b.MigrationsAssembly(MigrationAssembly.FullName));
+        ob.UseLazyLoadingProxies();
         return new CLContext(ob.Options);
     }
 }

@@ -62,15 +62,18 @@ public class UnityProjectLoader : IProjectLoader
         if (first == null)
         {
             string message = @$"Unity Editor version {version.EditorVersion} is required for this project but is not currently installed.
+
 The required Unity Editor version can be installed through Unity Hub or from the Unity Download Archive.
+
 https://unity3d.com/get-unity/download/archive";
             if (OperatingSystem.IsMacOS())
                 message += @"
+
 Warning: Due to unityhub:// link limitations and Unity Hub limitations, Apple Silicon editors may not be installable except through .dmg images from the Unity Download Archive.";
             List<ProjectLoadFailRemediation> remediations = new();
-            remediations.Add(new ProjectLoadFailRemediation("Open Unity Download Archive", "A browser can be opened and pointed to the Unity Download Archive.", ProcessUtils.GetUriCallback("https://unity3d.com/get-unity/download/archive")));
+            remediations.Add(new ProjectLoadFailRemediation("Open Unity Download Archive", $"Open the Unity Download Archive in a browser and install Unity Editor {version.EditorVersion}.", ProcessUtils.GetUriCallback("https://unity3d.com/get-unity/download/archive")));
             if (hubLocations.Any(File.Exists))
-                remediations.Insert(0, new ProjectLoadFailRemediation("Open Unity Hub", "Unity Hub can be opened with the required editor selected for install.", ProcessUtils.GetUriCallback($"unityhub://{version.EditorVersion}/{version.Revision}")));
+                remediations.Insert(0, new ProjectLoadFailRemediation("Open Unity Hub", $"Open Unity Hub with Unity Editor {version.EditorVersion} selected for install.", ProcessUtils.GetUriCallback($"unityhub://{version.EditorVersion}/{version.Revision}")));
             return new ProjectLoadResult(false, new ProjectLoadFailInfo("Editor Not Installed", message, remediations.ToArray()));
         }
         ProcessUtils.Start(first, "-projectPath", project.FullPath);

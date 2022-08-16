@@ -24,13 +24,15 @@ public static class CLContextBaseExtensions
         return result;
     }
 
-    public static async Task RemoveProjectDirectoryAsync(this CLContextBase context, ProjectDirectoryModel projectDirectory)
+    public static async Task<bool> RemoveProjectDirectoryAsync(this CLContextBase context, ProjectDirectoryModel projectDirectory)
     {
         if (await context.ProjectDirectories.FindAsync(projectDirectory.FullPath).ConfigureAwait(false) is { } existing)
         {
             context.ProjectDirectories.Remove(existing);
             await context.SaveChangesAsync().ConfigureAwait(false);
+            return true;
         }
+        return false;
     }
 
     public static async Task<RecentProjectModel> PushRecentProjectAsync(this CLContextBase context, CLConfiguration configuration, RecentProjectModel recentProject)
@@ -100,7 +102,8 @@ public static class CLContextBaseExtensions
             // ignored
         }
         await context.SaveChangesAsync().ConfigureAwait(false);
-        context.ProjectDirectoryProjects.RemoveRange(context.ProjectDirectoryProjects.Where(v => v.RecordUpdateTime != recordUpdateTime));
+        string key = directory.FullPath;
+        context.ProjectDirectoryProjects.RemoveRange(context.ProjectDirectoryProjects.Where(v => v.ProjectDirectory.FullPath == key && v.RecordUpdateTime != recordUpdateTime));
         await context.SaveChangesAsync().ConfigureAwait(false);
     }
 }

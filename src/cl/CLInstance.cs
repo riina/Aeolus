@@ -28,14 +28,23 @@ public sealed class CLInstance : IDisposable
         return new CLInstance(typeMap, db, configuration);
     }
 
-    public async Task AddDirectoryAsync(string directory)
+    public readonly record struct DirectoryAddResult(bool Success, ProjectDirectoryModel Model);
+
+    public async Task<DirectoryAddResult> AddDirectoryAsync(string directory)
     {
-        await Db.AddProjectDirectoryAsync(new ProjectDirectoryModel { FullPath = directory, Projects = new HashSet<ProjectDirectoryProjectModel>(), RecordUpdateTime = DateTime.Now });
+        var v = new ProjectDirectoryModel { FullPath = Path.GetFullPath(directory), Projects = new HashSet<ProjectDirectoryProjectModel>(), RecordUpdateTime = DateTime.Now };
+        var result = await Db.AddProjectDirectoryAsync(v);
+        return new DirectoryAddResult(ReferenceEquals(v, result), result);
     }
 
-    public async Task RemoveDirectoryAsync(string directory)
+    public async Task<bool> RemoveDirectoryAsync(string directory)
     {
-        await Db.RemoveProjectDirectoryAsync(new ProjectDirectoryModel { FullPath = directory, Projects = new HashSet<ProjectDirectoryProjectModel>(), RecordUpdateTime = DateTime.Now });
+        return await Db.RemoveProjectDirectoryAsync(new ProjectDirectoryModel { FullPath = Path.GetFullPath(directory), Projects = new HashSet<ProjectDirectoryProjectModel>(), RecordUpdateTime = DateTime.Now });
+    }
+
+    public async Task UpdateDirectoryAsync(ProjectDirectoryModel directory)
+    {
+        await Db.UpdateProjectDirectoryProjectListAsync(directory, Configuration, Configuration.Evaluators);
     }
 
     public async Task UpdateAllDirectoriesAsync()
@@ -55,7 +64,7 @@ public sealed class CLInstance : IDisposable
     {
         var evaluator = GetProjectEvaluator(projectModel);
         if (evaluator == null)
-            // TODO
+            // TODO add descriptive fail info for failing to get evaluator
             return Task.FromResult(new ProjectLoadResult(false, new ProjectLoadFailInfo("TODO", "TODO", Array.Empty<ProjectLoadFailRemediation>())));
         var loader = evaluator.GetProjectLoader();
         return loader.TryLoadAsync(projectModel);

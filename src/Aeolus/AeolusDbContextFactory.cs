@@ -13,6 +13,7 @@ public class AeolusDbContextFactory : IDesignTimeDbContextFactory<AeolusDbContex
         var ob = new DbContextOptionsBuilder<AeolusDbContext>();
         ob.UseSqlite($"Data Source=tmp_aeolus.db;",
             b => b.MigrationsAssembly(MigrationAssembly.FullName));
+        ob.UseLazyLoadingProxies();
         return new AeolusDbContext(ob.Options);
     }
 }
