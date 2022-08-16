@@ -53,6 +53,10 @@ public sealed class CLInstance : IDisposable
             await Db.UpdateProjectDirectoryProjectListAsync(dir, Configuration, Configuration.Evaluators);
     }
 
+    public Task<RecentProjectModel> PushRecentProjectAsync(RecentProjectModel recentProject) => Db.PushRecentProjectAsync(Configuration, recentProject);
+
+    public Task<RecentProjectModel> PushRecentProjectAsync(BaseProjectModel project) => Db.PushRecentProjectAsync(Configuration, project);
+
     public IProjectEvaluator? GetProjectEvaluator(BaseProjectModel project)
     {
         var typeString = TypeTool.ParseTypeString(project.ProjectEvaluatorType);

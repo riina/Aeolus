@@ -63,10 +63,17 @@ public static class CLContextBaseExtensions
         return result;
     }
 
-    public static async Task PushRecentProjectAsync(this CLContextBase context, CLConfiguration configuration, ProjectDirectoryProjectModel projectDirectoryProject)
+    public static async Task<RecentProjectModel> PushRecentProjectAsync(this CLContextBase context, CLConfiguration configuration, BaseProjectModel project)
     {
-        var recentProject = await context.RecentProjects.FindAsync(projectDirectoryProject.FullPath).ConfigureAwait(false) ?? new RecentProjectModel { FullPath = projectDirectoryProject.FullPath, Framework = projectDirectoryProject.Framework, RecordUpdateTime = DateTime.Now, ProjectEvaluatorType = projectDirectoryProject.ProjectEvaluatorType };
-        await PushRecentProjectAsync(context, configuration, recentProject).ConfigureAwait(false);
+        var recentProject = await context.RecentProjects.FindAsync(project.FullPath).ConfigureAwait(false) ?? new RecentProjectModel
+        {
+            FullPath = project.FullPath,
+            Framework = project.Framework,
+            RecordUpdateTime = DateTime.Now,
+            ProjectEvaluatorType = project.ProjectEvaluatorType,
+            Nickname = project.Nickname
+        };
+        return await PushRecentProjectAsync(context, configuration, recentProject).ConfigureAwait(false);
     }
 
     public static async Task UpdateProjectDirectoryProjectListAsync(this CLContextBase context, ProjectDirectoryModel directory, CLConfiguration configuration, IReadOnlyCollection<IProjectEvaluator> evaluators)

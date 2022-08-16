@@ -102,6 +102,20 @@ projectListCommand.Handler = CommandHandler.Create(async () =>
     }
 });
 projectCommand.Add(projectListCommand);
+// project recent
+var projectRecentCommand = new Command("recent", "List recent projects");
+projectRecentCommand.Handler = CommandHandler.Create(async () =>
+{
+    var instance = await CLInstance.CreateAsync(GetConfiguration());
+    foreach (var project in instance.Db.RecentProjects.OrderByDescending(v => v.OpenedTime))
+    {
+        StringBuilder sb = new();
+        if (project.Nickname is { } nick) sb.Append(nick).Append(" - ");
+        sb.Append(CultureInfo.InvariantCulture, $"{project.FullPath} ({instance.GetPlatformName(project)} {instance.GetDisplayFramework(project)})");
+        Console.WriteLine(sb.ToString());
+    }
+});
+projectCommand.Add(projectRecentCommand);
 // project launch
 var projectLaunchProjectArgument = new Argument<string>("project", description: "Target project path or nick");
 var projectLaunchInteractiveOption = new Option<bool>("--interactive", "Allow interactive remediations");
@@ -119,7 +133,12 @@ projectLaunchCommand.Handler = CommandHandler.Create(async (string project, bool
         return 1;
     }
     var result = await instance.LoadAsync(toLaunch);
-    if (!result.Success)
+    if (result.Success)
+    {
+        await instance.PushRecentProjectAsync(toLaunch);
+        return 0;
+    }
+    else
     {
         if (result.FailInfo is { } failInfo)
         {
@@ -177,7 +196,6 @@ projectLaunchCommand.Handler = CommandHandler.Create(async (string project, bool
         }
         return 2;
     }
-    return 0;
 });
 projectCommand.Add(projectLaunchCommand);
 // project nick
