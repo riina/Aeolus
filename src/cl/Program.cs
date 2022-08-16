@@ -35,19 +35,6 @@ folderAddCommand.Handler = CommandHandler.Create(async (string[] paths) =>
     }
 });
 folderCommand.Add(folderAddCommand);
-// folder remove
-var folderRemovePathsArgument = new Argument<string[]>("paths", description: "Target paths");
-var folderRemoveCommand = new Command("remove", "Remove project folders") { folderRemovePathsArgument };
-folderRemoveCommand.Handler = CommandHandler.Create(async (string[] paths) =>
-{
-    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
-    foreach (string path in paths.Select(Path.GetFullPath))
-    {
-        bool removed = await instance.RemoveDirectoryAsync(path);
-        Console.WriteLine(removed ? $"Directory \"{path}\" removed" : $"Directory \"{path}\" not registered");
-    }
-});
-folderCommand.Add(folderRemoveCommand);
 // folder list
 var folderListTotalCommand = new Option<bool>("--total", "Show total project counts");
 var folderListCommand = new Command("list", "List project folders") { folderListTotalCommand };
@@ -62,6 +49,28 @@ folderListCommand.Handler = CommandHandler.Create(async (bool total) =>
     }
 });
 folderCommand.Add(folderListCommand);
+// folder remove
+var folderRemovePathsArgument = new Argument<string[]>("paths", description: "Target paths");
+var folderRemoveCommand = new Command("remove", "Remove project folders") { folderRemovePathsArgument };
+folderRemoveCommand.Handler = CommandHandler.Create(async (string[] paths) =>
+{
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
+    foreach (string path in paths.Select(Path.GetFullPath))
+    {
+        bool removed = await instance.RemoveDirectoryAsync(path);
+        Console.WriteLine(removed ? $"Directory \"{path}\" removed" : $"Directory \"{path}\" not registered");
+    }
+});
+folderCommand.Add(folderRemoveCommand);
+// folder clear
+var folderClearCommand = new Command("clear", "Clear project folders");
+folderClearCommand.Handler = CommandHandler.Create(async () =>
+{
+    var instance = await CLInstance.CreateAsync(await GetConfigurationAsync());
+    instance.Db.ProjectDirectories.RemoveRange(instance.Db.ProjectDirectories);
+    await instance.Db.SaveChangesAsync();
+});
+folderCommand.Add(folderClearCommand);
 // folder scan
 var folderScanPathsArgument = new Argument<string[]>("paths", description: "Target paths");
 var folderScanCommand = new Command("scan", "(re)scan project folder for projects") { verboseOption, folderScanPathsArgument };
@@ -248,6 +257,46 @@ projectUnnickCommand.Handler = CommandHandler.Create(async (string project) =>
     }
 });
 projectCommand.Add(projectUnnickCommand);
+// config
+var configCommand = new Command("config", "Manage configuration");
+rootCommand.Add(configCommand);
+// config add
+var configAddKeyArgument = new Argument<string>("key", description: "Config key");
+var configAddValueArgument = new Argument<string>("value", description: "Config value");
+var configAddCommand = new Command("add", "Add config key-value pair") { configAddKeyArgument, configAddValueArgument };
+configAddCommand.Handler = CommandHandler.Create(async (string key, string value) =>
+{
+    var cfg = await GetConfigurationAsync();
+    var dict = cfg.Options.ToDictionary(v => v.Key, v => v.Value);
+    dict[key] = JsonSerializer.SerializeToElement(value);
+    await WriteOptionsDefaultPathAsync(dict);
+});
+configCommand.Add(configAddCommand);
+// config list
+var configListCommand = new Command("list", "List config key-value pairs");
+configListCommand.Handler = CommandHandler.Create(async () =>
+{
+    var cfg = await GetConfigurationAsync();
+    foreach ((string key, JsonElement value) in cfg.Options)
+        Console.WriteLine($"{key}={value.ToString()}");
+});
+configCommand.Add(configListCommand);
+// config remove
+var configRemoveKeyArgument = new Argument<string>("key", description: "Config key");
+var configRemoveCommand = new Command("remove", "Remove config key-value pair") { configRemoveKeyArgument };
+configRemoveCommand.Handler = CommandHandler.Create(async (string key) =>
+{
+    var cfg = await GetConfigurationAsync();
+    var dict = cfg.Options.ToDictionary(v => v.Key, v => v.Value);
+    dict.Remove(key);
+    await WriteOptionsDefaultPathAsync(dict);
+});
+configCommand.Add(configRemoveCommand);
+// config clear
+var configClearCommand = new Command("clear", "Clear config");
+configClearCommand.Handler = CommandHandler.Create(async () => await WriteOptionsDefaultPathAsync(ImmutableDictionary<string, JsonElement>.Empty));
+configCommand.Add(configClearCommand);
+// invoke
 return await rootCommand.InvokeAsync(args);
 
 static async Task<CLConfiguration> GetConfigurationAsync()
@@ -257,8 +306,7 @@ static async Task<CLConfiguration> GetConfigurationAsync()
     if (!File.Exists(cfgFile))
     {
         Directory.CreateDirectory(CLFiles.DataDirectory);
-        await using var stream = File.Create(cfgFile);
-        await CLConfiguration.SerializeOptionsAsync(ImmutableDictionary<string, JsonElement>.Empty, stream);
+        await WriteOptionsAsync(cfgFile, ImmutableDictionary<string, JsonElement>.Empty);
     }
     else
     {
@@ -266,4 +314,17 @@ static async Task<CLConfiguration> GetConfigurationAsync()
         cfg.Options = await CLConfiguration.LoadOptionsAsync(stream);
     }
     return cfg;
+}
+
+static Task WriteOptionsDefaultPathAsync(IReadOnlyDictionary<string, JsonElement> options)
+{
+    string cfgFile = Path.Combine(CLFiles.DataDirectory, "clconfig.json");
+    Directory.CreateDirectory(CLFiles.DataDirectory);
+    return WriteOptionsAsync(cfgFile, options);
+}
+
+static async Task WriteOptionsAsync(string cfgFile, IReadOnlyDictionary<string, JsonElement> options)
+{
+    await using var stream = File.Create(cfgFile);
+    await CLConfiguration.SerializeOptionsAsync(options, stream);
 }
