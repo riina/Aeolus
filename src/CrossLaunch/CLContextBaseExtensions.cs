@@ -57,7 +57,7 @@ public static class CLContextBaseExtensions
         result.RecordUpdateTime = dateTime;
         await context.SaveChangesAsync().ConfigureAwait(false);
         int existingCount = await context.RecentProjects.CountAsync().ConfigureAwait(false);
-        int over = existingCount - Math.Max(0, configuration.MaxRecentProjects);
+        int over = existingCount - Math.Max(0, configuration.MaxRecentProjectsWithOverride);
         if (over > 0) context.RecentProjects.RemoveRange(await context.RecentProjects.OrderBy(v => v.OpenedTime).Take(over).ToListAsync().ConfigureAwait(false));
         await context.SaveChangesAsync().ConfigureAwait(false);
         return result;

@@ -11,6 +11,10 @@ public partial class CLConfiguration
 
     public int MaxDepth { get; set; } = 1;
 
+    public int MaxRecentProjectsWithOverride => TryGetInt64Option("recent.max", out long? value) ? (int)value : MaxRecentProjects;
+
+    public int MaxDepthWithOverride => TryGetInt64Option("scan.maxdepth", out long? value) ? (int)value : MaxDepth;
+
     public IReadOnlyDictionary<string, JsonElement> Options { get; set; } = ImmutableDictionary<string, JsonElement>.Empty;
 
     public static async Task<IReadOnlyDictionary<string, JsonElement>> LoadOptionsAsync(Stream stream, CancellationToken cancellationToken = default)

@@ -11,7 +11,7 @@ public abstract class FolderSupportBase<T> : SupportBase<T> where T : IProjectLo
 {
     public override async IAsyncEnumerable<EvaluatedProject> FindProjectsAsync(string path, CLConfiguration configuration, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        foreach (var (itemIsFile, itemPath) in Recurser.Recurse(new[] { path }, configuration.MaxDepth))
+        foreach (var (itemIsFile, itemPath) in Recurser.Recurse(new[] { path }, configuration.MaxDepthWithOverride))
         {
             if (itemIsFile) continue;
             var evaluated = await EvaluateProjectAsync(itemPath, configuration, cancellationToken);
@@ -24,7 +24,7 @@ public abstract class FileSupportBase<T> : SupportBase<T> where T : IProjectLoad
 {
     public override async IAsyncEnumerable<EvaluatedProject> FindProjectsAsync(string path, CLConfiguration configuration, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        foreach (var (itemIsFile, itemPath) in Recurser.Recurse(new[] { path }, configuration.MaxDepth))
+        foreach (var (itemIsFile, itemPath) in Recurser.Recurse(new[] { path }, configuration.MaxDepthWithOverride))
         {
             if (!itemIsFile) continue;
             var evaluated = await EvaluateProjectAsync(itemPath, configuration, cancellationToken);

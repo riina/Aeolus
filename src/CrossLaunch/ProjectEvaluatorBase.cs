@@ -20,7 +20,7 @@ public abstract class FolderProjectEvaluatorBase : ProjectEvaluatorBase
 {
     public override async IAsyncEnumerable<EvaluatedProject> FindProjectsAsync(string path, CLConfiguration configuration, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        foreach (var (itemIsFile, itemPath) in Recurser.Recurse(new[] { path }, configuration.MaxDepth))
+        foreach (var (itemIsFile, itemPath) in Recurser.Recurse(new[] { path }, configuration.MaxDepthWithOverride))
         {
             if (itemIsFile) continue;
             var evaluated = await EvaluateProjectAsync(itemPath, configuration, cancellationToken);
@@ -33,7 +33,7 @@ public abstract class FileProjectEvaluatorBase : ProjectEvaluatorBase
 {
     public override async IAsyncEnumerable<EvaluatedProject> FindProjectsAsync(string path, CLConfiguration configuration, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        foreach (var (itemIsFile, itemPath) in Recurser.Recurse(new[] { path }, configuration.MaxDepth))
+        foreach (var (itemIsFile, itemPath) in Recurser.Recurse(new[] { path }, configuration.MaxDepthWithOverride))
         {
             if (!itemIsFile) continue;
             var evaluated = await EvaluateProjectAsync(itemPath, configuration, cancellationToken);
