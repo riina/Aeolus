@@ -94,7 +94,7 @@ var projectCommand = new Command("project", "Manage projects");
 rootCommand.Add(projectCommand);
 // project list
 var projectListCommand = new Command("list", "List projects");
-projectListCommand.Handler = CommandHandler.Create(async () =>
+var projectListCommandHandler = CommandHandler.Create(async () =>
 {
     var instance = await CLInstance.CreateAsync(GetConfiguration());
     foreach (var project in instance.Db.ProjectDirectoryProjects)
@@ -105,7 +105,11 @@ projectListCommand.Handler = CommandHandler.Create(async () =>
         Console.WriteLine(sb.ToString());
     }
 });
+projectListCommand.Handler = projectListCommandHandler;
 projectCommand.Add(projectListCommand);
+var lCommand = new Command("l", "List projects");
+lCommand.Handler = projectListCommandHandler;
+rootCommand.Add(lCommand);
 // project recent
 var projectRecentCommand = new Command("recent", "List recent projects");
 var projectRecentCommandHandler = CommandHandler.Create(async () =>

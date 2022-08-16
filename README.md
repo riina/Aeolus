@@ -28,6 +28,8 @@ List projects:
 
 `cl project list`
 
+`cl l`
+
 List recent projects:
 
 `cl project recent`
