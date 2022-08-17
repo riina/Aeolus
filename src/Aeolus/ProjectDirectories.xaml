@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:localmodelproxies="using:Aeolus.ModelProxies"
              x:Class="Aeolus.ProjectDirectories"
              Title="Folders">
 
@@ -19,7 +20,7 @@
                 HorizontalOptions="Start" />
             </HorizontalStackLayout>
 
-            <CollectionView x:Name="folderList">
+            <CollectionView x:Name="folderList" x:DataType="localmodelproxies:ProjectDirectory">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Label Text="{Binding FullPath}" FontSize="12" />
