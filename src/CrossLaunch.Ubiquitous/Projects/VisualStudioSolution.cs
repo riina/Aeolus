@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using CrossLaunch.Models;
@@ -46,7 +47,7 @@ public record VisualStudioSolution(string FullPath, VisualStudioSolutionFile Sol
 
     private static readonly HashSet<Guid> s_riderTypes = new() { Guid.ParseExact("9a19103f-16f7-4668-be54-9a1e7a4f7556", "D"), Guid.ParseExact("fae04ec0-301f-11d3-bf4b-00c04f79efbc", "D") };
 
-    public override Task<ProjectLoadResult> TryLoadAsync(CLConfiguration configuration)
+    public override async Task<ProjectLoadResult> TryLoadAsync(CLConfiguration configuration)
     {
         string projectDir = Path.GetDirectoryName(FullPath) ?? "";
         var remediations = new List<ProjectLoadFailRemediation>();
@@ -70,7 +71,7 @@ public record VisualStudioSolution(string FullPath, VisualStudioSolutionFile Sol
                 if (exePath != null)
                 {
                     ProcessUtils.Start(exePath, FullPath);
-                    return Task.FromResult(ProjectLoadResult.Successful);
+                    return ProjectLoadResult.Successful;
                 }
                 remediations.Add(new ProjectLoadFailRemediation("Get JetBrains Rider", @"Install JetBrains Rider, a feature-rich proprietary IDE primarily for .NET development.
 https://www.jetbrains.com/rider/", ProcessUtils.GetUriCallback("https://www.jetbrains.com/rider/")));
@@ -86,14 +87,32 @@ https://www.jetbrains.com/rider/", ProcessUtils.GetUriCallback("https://www.jetb
             if (exePath != null)
             {
                 ProcessUtils.Start(exePath, projectDir);
-                return Task.FromResult(ProjectLoadResult.Successful);
+                return ProjectLoadResult.Successful;
             }
             remediations.Add(new ProjectLoadFailRemediation("Get Visual Studio Code", @"Install Visual Studio Code from Microsoft Corporation, a lightweight proprietary code editor.
 https://code.visualstudio.com/", ProcessUtils.GetUriCallback("https://code.visualstudio.com/")));
         }
         if (OperatingSystem.IsWindows())
         {
-            // TODO load through visual studio (e.g. vswhere)
+            string vswhere = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86, Environment.SpecialFolderOption.DoNotVerify), @"Microsoft Visual Studio\Installer\vswhere.exe");
+            if (File.Exists(vswhere))
+            {
+                var proc = new Process();
+                proc.StartInfo.FileName = vswhere;
+                proc.StartInfo.Arguments = "-latest -format value -property productPath";
+                proc.StartInfo.UseShellExecute = false;
+                proc.StartInfo.RedirectStandardOutput = true;
+                string? line = null;
+                proc.OutputDataReceived += (sender, args) => line ??= args.Data;
+                proc.Start();
+                proc.BeginOutputReadLine();
+                await proc.WaitForExitAsync();
+                if (line != null)
+                {
+                    ProcessUtils.Start(line, FullPath);
+                    return ProjectLoadResult.Successful;
+                }
+            }
             remediations.Add(new ProjectLoadFailRemediation("Get Visual Studio", @"Install Visual Studio from Microsoft Corporation, a feature-rich proprietary IDE.
 https://visualstudio.microsoft.com/vs/", ProcessUtils.GetUriCallback("https://visualstudio.microsoft.com/vs/")));
         }
@@ -102,15 +121,15 @@ https://visualstudio.microsoft.com/vs/", ProcessUtils.GetUriCallback("https://vi
             string? exePath = FSUtil.IfFileExists("/Applications/Visual Studio.app/Contents/MacOS/VisualStudio");
             if (exePath != null)
             {
-                ProcessUtils.Start(exePath, projectDir);
-                return Task.FromResult(ProjectLoadResult.Successful);
+                ProcessUtils.Start(exePath, FullPath);
+                return ProjectLoadResult.Successful;
             }
             remediations.Add(new ProjectLoadFailRemediation("Get Visual Studio for Mac", @"Install Visual Studio for Mac from Microsoft Corporation, a proprietary IDE primarily for .NET and Xamarin development.
 https://visualstudio.microsoft.com/vs/mac/", ProcessUtils.GetUriCallback("https://visualstudio.microsoft.com/vs/mac/")));
         }
-        return Task.FromResult(ProjectLoadResult.Failure("No Valid Program Found", @"Failed to identify software capable of opening this Visual Studio solution file.
+        return ProjectLoadResult.Failure("No Valid Program Found", @"Failed to identify software capable of opening this Visual Studio solution file.
 
-A program such as Visual Studio or Rider must be installed.", remediations.ToArray()));
+A program such as Visual Studio or Rider must be installed.", remediations.ToArray());
     }
 
     private static string? GetMaxRiderFolder(string dir) =>
