@@ -19,6 +19,7 @@
                 SemanticProperties.Hint="Add a new folder"
                 Clicked="AddBtn_Clicked"
                 HorizontalOptions="Start" />
+                <ActivityIndicator BindingContext="{x:Static local:App.Me}" IsRunning="{Binding Busy}" />
             </HorizontalStackLayout>
 
             <CollectionView x:Name="folderList" x:DataType="localmodelproxies:ProjectDirectory">

@@ -26,10 +26,7 @@ public partial class ProjectDirectories : ContentPage
         if (picked != null)
         {
             var app = App.Me!;
-            var result = await app.CL.AddDirectoryAsync(picked);
-            if (result.Success) await app.CL.UpdateDirectoryAsync(result.Model);
-            app.UpdateProjectDirectories();
-            app.UpdateProjectDirectoryProjects();
+            await app.AddProjectDirectoryAsync(picked);
         }
 
     }

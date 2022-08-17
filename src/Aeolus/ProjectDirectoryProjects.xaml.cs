@@ -20,7 +20,6 @@ public partial class ProjectDirectoryProjects : ContentPage
     private async void RefreshBtn_Clicked(object sender, EventArgs e)
     {
         var app = App.Me!;
-        await app.CL.UpdateAllDirectoriesAsync();
-        app.UpdateProjectDirectoryProjects();
+        await app.UpdateProjectDirectoryProjectsAsync();
     }
 }

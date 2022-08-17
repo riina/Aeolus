@@ -11,10 +11,26 @@ public partial class App : Application
 {
     public static App? Me => Current as App;
 
+    public bool Busy
+    {
+        get => _busy;
+        private set
+        {
+            if (_busy != value)
+            {
+
+                _busy = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public readonly CLInstance CL;
 
     public List<ProjectDirectory> ProjectDirectories = new();
     public List<ProjectDirectoryProject> ProjectDirectoryProjects = new();
+    private bool _busy;
+    private readonly AutoResetEvent _are = new(true);
 
     public App()
     {
@@ -45,6 +61,27 @@ public partial class App : Application
         OnProjectDirectoryProjectsUpdated?.Invoke(ProjectDirectoryProjects);
     }
 
+    public async Task AddProjectDirectoryAsync(string picked)
+    {
+        _are.WaitOne();
+        Busy = true;
+        var result = await CL.AddDirectoryAsync(picked);
+        if (result.Success) await CL.UpdateDirectoryAsync(result.Model);
+        UpdateProjectDirectories();
+        UpdateProjectDirectoryProjects();
+        Busy = false;
+        _are.Set();
+    }
+
+    public async Task UpdateProjectDirectoryProjectsAsync()
+    {
+        _are.WaitOne();
+        Busy = true;
+        await CL.UpdateAllDirectoriesAsync();
+        UpdateProjectDirectoryProjects();
+        Busy = false;
+        _are.Set();
+    }
 
     static CLConfiguration GetConfiguration()
     {

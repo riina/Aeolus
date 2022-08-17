@@ -11,7 +11,6 @@
             Spacing="10"
             Padding="10,0"
             VerticalOptions="StartAndExpand">
-
             <HorizontalStackLayout Spacing="10">
                 <Button Style="{DynamicResource smolBtnStyle}"
                 x:Name="RefreshBtn"
@@ -19,6 +18,7 @@
                 SemanticProperties.Hint="Refresh"
                 Clicked="RefreshBtn_Clicked"
                 HorizontalOptions="Start" />
+                <ActivityIndicator BindingContext="{x:Static local:App.Me}" IsRunning="{Binding Busy}" />
             </HorizontalStackLayout>
 
             <CollectionView x:Name="projectList" x:DataType="localmodelproxies:ProjectDirectoryProject">
