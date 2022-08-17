@@ -1,3 +1,5 @@
+using Aeolus.ModelProxies;
+
 namespace Aeolus;
 
 public partial class ProjectDirectoryProjectEntry : ContentView
@@ -6,4 +8,10 @@ public partial class ProjectDirectoryProjectEntry : ContentView
 	{
 		InitializeComponent();
 	}
+
+    private async void OpenBtn_Clicked(object sender, EventArgs e)
+    {
+        if (BindingContext is ProjectDirectoryProject project)
+            await App.Me!.LoadProjectAsync(project.FullPath);
+    }
 }

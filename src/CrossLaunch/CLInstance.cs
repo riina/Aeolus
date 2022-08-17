@@ -207,9 +207,7 @@ public sealed class CLInstance : IDisposable
                 project = await Db.ProjectDirectoryProjects.FindAsync(Path.GetFullPath(Path.Combine(pairKey, subDir)));
             }
         }
-        else
-            project ??= await Db.ProjectDirectoryProjects.FindAsync(fullPath);
-        return project;
+        return project ??= await Db.ProjectDirectoryProjects.FindAsync(fullPath);
     }
 
     private static bool TrySplitProjectShorthand(string key, [NotNullWhen(true)] out string? pairValue, [NotNullWhen(true)] out string? subDir)

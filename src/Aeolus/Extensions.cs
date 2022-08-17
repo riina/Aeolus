@@ -16,6 +16,6 @@ internal static class Extensions
         {
             Name = Path.GetFileName(v.FullPath),
             FullPath = v.FullPath,
-            SoftwareAndFramework = $"{cl.GetPlatformName(v)} {cl.GetDisplayFramework(v)}"
+            SoftwareAndFramework = $"{cl.GetPlatformName(v)}\n{cl.GetDisplayFramework(v)}"
         }).ToList();
 }

@@ -71,7 +71,7 @@ public partial class App : Application
         get => _failInfo;
         set
         {
-            if(_failInfo != value)
+            if (_failInfo != value)
             {
                 _failInfo = value ?? ProjectLoadFailInfo.Unknown;
                 OnPropertyChanged();
@@ -148,6 +148,25 @@ public partial class App : Application
         Busy = true;
         await CL.UpdateAllDirectoriesAsync();
         UpdateProjectDirectoryProjects();
+        Busy = false;
+        Interactible = true;
+        _are.Set();
+    }
+
+    public async Task LoadProjectAsync(string picked)
+    {
+        _are.WaitOne();
+        Interactible = false;
+        Busy = true;
+        if (await CL.FindProjectAsync(picked) is { } project)
+        {
+            var result = await CL.LoadAsync(project);
+            if (!result.Success)
+            {
+                FailInfo = result.FailInfo ?? ProjectLoadFailInfo.Unknown;
+                await Shell.Current.GoToAsync("failed");
+            }
+        }
         Busy = false;
         Interactible = true;
         _are.Set();
