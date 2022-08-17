@@ -4,6 +4,7 @@
              xmlns:localmodelproxies="using:Aeolus.ModelProxies"
              xmlns:local="clr-namespace:Aeolus"
              x:Class="Aeolus.ProjectDirectories"
+             BindingContext="{x:Static local:App.Me}"
              Title="Folders">
 
     <ScrollView>
@@ -18,8 +19,9 @@
                 Text="Add"
                 SemanticProperties.Hint="Add a new folder"
                 Clicked="AddBtn_Clicked"
+                IsEnabled="{Binding Busy, Converter={StaticResource InvertedBoolConverter}}"
                 HorizontalOptions="Start" />
-                <ActivityIndicator BindingContext="{x:Static local:App.Me}" IsRunning="{Binding Busy}" />
+                <ActivityIndicator IsRunning="{Binding Busy}" />
             </HorizontalStackLayout>
 
             <CollectionView x:Name="folderList" BindingContext="{x:Static local:App.Me}" ItemsSource="{Binding ProjectDirectories}" >

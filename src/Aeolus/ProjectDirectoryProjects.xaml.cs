@@ -12,4 +12,9 @@ public partial class ProjectDirectoryProjects : ContentPage
         var app = App.Me!;
         await app.UpdateProjectDirectoryProjectsAsync();
     }
+
+    private async void SimulateErrorBtn_Clicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("failed");
+    }
 }

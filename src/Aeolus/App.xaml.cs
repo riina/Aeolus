@@ -25,6 +25,20 @@ public partial class App : Application
         }
     }
 
+    public bool Interactible
+    {
+        get => _interactible;
+        private set
+        {
+            if (_interactible != value)
+            {
+
+                _interactible = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public List<ProjectDirectoryProject> ProjectDirectoryProjects
     {
         get => _projectDirectoryProjects;
@@ -52,11 +66,26 @@ public partial class App : Application
         }
     }
 
+    public ProjectLoadFailInfo FailInfo
+    {
+        get => _failInfo;
+        set
+        {
+            if(_failInfo != value)
+            {
+                _failInfo = value ?? ProjectLoadFailInfo.Unknown;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public readonly CLInstance CL;
 
     private List<ProjectDirectory> _projectDirectories = new();
     private List<ProjectDirectoryProject> _projectDirectoryProjects = new();
     private bool _busy;
+    private bool _interactible = true;
+    private ProjectLoadFailInfo _failInfo = ProjectLoadFailInfo.Unknown;
     private readonly AutoResetEvent _are = new(true);
 
     public App()
@@ -85,18 +114,21 @@ public partial class App : Application
     public async Task AddProjectDirectoryAsync(string picked)
     {
         _are.WaitOne();
+        Interactible = false;
         Busy = true;
         var result = await CL.AddDirectoryAsync(picked);
         if (result.Success) await CL.UpdateDirectoryAsync(result.Model);
         UpdateProjectDirectories();
         UpdateProjectDirectoryProjects();
         Busy = false;
+        Interactible = true;
         _are.Set();
     }
 
     public async Task RemoveProjectDirectoryAsync(string picked)
     {
         _are.WaitOne();
+        Interactible = false;
         Busy = true;
         bool success = await CL.RemoveDirectoryAsync(picked);
         if (success)
@@ -105,16 +137,19 @@ public partial class App : Application
             UpdateProjectDirectoryProjects();
         }
         Busy = false;
+        Interactible = true;
         _are.Set();
     }
 
     public async Task UpdateProjectDirectoryProjectsAsync()
     {
         _are.WaitOne();
+        Interactible = false;
         Busy = true;
         await CL.UpdateAllDirectoriesAsync();
         UpdateProjectDirectoryProjects();
         Busy = false;
+        Interactible = true;
         _are.Set();
     }
 
@@ -134,13 +169,6 @@ public partial class App : Application
             cfg.Options = CLConfiguration.LoadOptions(stream);
         }
         return cfg;
-    }
-
-    static void WriteConfigurationDefaultPath(IReadOnlyDictionary<string, JsonElement> options)
-    {
-        string cfgFile = Path.Combine(AeolusFiles.DataDirectory, "clconfig.json");
-        Directory.CreateDirectory(AeolusFiles.DataDirectory);
-        WriteConfiguration(cfgFile, options);
     }
 
     static void WriteConfiguration(string cfgFile, IReadOnlyDictionary<string, JsonElement> options)

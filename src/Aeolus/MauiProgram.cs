@@ -1,4 +1,6 @@
-﻿namespace Aeolus;
+﻿using CommunityToolkit.Maui;
+
+namespace Aeolus;
 
 public static class MauiProgram
 {
@@ -18,6 +20,7 @@ public static class MauiProgram
         builder.Services.AddTransient<ProjectDirectories>();
         builder.Services.AddTransient<ProjectDirectoryProjects>();
         builder.Services.AddTransient<App>();
+        builder.UseMauiCommunityToolkit();
         return builder.Build();
 	}
 }

@@ -4,6 +4,7 @@
              xmlns:localmodelproxies="using:Aeolus.ModelProxies"
              xmlns:local="clr-namespace:Aeolus"
              x:Class="Aeolus.ProjectDirectoryProjects"
+             BindingContext="{x:Static local:App.Me}"
              Title="Projects">
 
     <ScrollView>
@@ -17,8 +18,15 @@
                 Text="Refresh"
                 SemanticProperties.Hint="Refresh project list"
                 Clicked="RefreshBtn_Clicked"
+                IsEnabled="{Binding Busy, Converter={StaticResource InvertedBoolConverter}}"
                 HorizontalOptions="Start" />
-                <ActivityIndicator BindingContext="{x:Static local:App.Me}" IsRunning="{Binding Busy}" />
+                <Button Style="{DynamicResource smolBtnStyle}"
+                x:Name="SimulateErrorBtn"
+                Text="Simulate Error"
+                SemanticProperties.Hint="Simulate an error"
+                Clicked="SimulateErrorBtn_Clicked"
+                HorizontalOptions="Start" />
+                <ActivityIndicator IsRunning="{Binding Busy}" />
             </HorizontalStackLayout>
 
             <CollectionView x:Name="projectList"
