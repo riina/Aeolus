@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System.Collections.Immutable;
 using System.Text.Json;
+using Aeolus.ModelProxies;
 using CrossLaunch;
 using CrossLaunch.Ubiquitous;
 
@@ -12,6 +13,9 @@ public partial class App : Application
 
     public readonly CLInstance CL;
 
+    public readonly List<ProjectDirectory> ProjectDirectories = new();
+    public readonly List<ProjectDirectoryProject> ProjectDirectoryProjects = new();
+
     public App()
     {
         InitializeComponent();
@@ -19,9 +23,24 @@ public partial class App : Application
         var db = fac.CreateDbContext(Array.Empty<string>());
         var cfg = GetConfiguration();
         CL = CLInstance.Create(cfg, db);
+        UpdateProjectDirectories();
+        UpdateProjectDirectoryProjects();
 
         MainPage = new AppShell();
     }
+
+    public void UpdateProjectDirectories()
+    {
+        ProjectDirectories.Clear();
+        ProjectDirectories.AddRange(CL.GetProjectDirectories());
+    }
+
+    public void UpdateProjectDirectoryProjects()
+    {
+        ProjectDirectoryProjects.Clear();
+        ProjectDirectoryProjects.AddRange(CL.GetProjectDirectoryProjects());
+    }
+
 
     static CLConfiguration GetConfiguration()
     {

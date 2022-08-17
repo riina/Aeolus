@@ -5,10 +5,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Aeolus"
     Shell.FlyoutBehavior="Disabled">
-
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar>
+        <Tab Title="Projects">
+            <ShellContent ContentTemplate="{DataTemplate local:ProjectDirectoryProjects}" />
+        </Tab>
+        <Tab Title="Folders">
+            <ShellContent ContentTemplate="{DataTemplate local:ProjectDirectories}" />
+        </Tab>
+    </TabBar>
 
 </Shell>
