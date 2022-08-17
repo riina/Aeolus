@@ -18,4 +18,12 @@ internal static class Extensions
             FullPath = v.FullPath,
             SoftwareAndFramework = $"{cl.GetPlatformName(v)}\n{cl.GetDisplayFramework(v)}"
         }).ToList();
+
+    public static List<Remediation> GetRemediations(this ProjectLoadFailInfo failInfo)
+        => failInfo.Remediations.Select(v => new Remediation
+        {
+            ActionShortName = v.ActionShortName,
+            ActionDescription = v.ActionDescription,
+            Callback = v.Callback
+        }).ToList();
 }

@@ -79,6 +79,19 @@ public partial class App : Application
         }
     }
 
+    public IReadOnlyCollection<Remediation> Remediations
+    {
+        get => _remediations;
+        set
+        {
+            if (_remediations != value)
+            {
+                _remediations = value ?? Array.Empty<Remediation>();
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public readonly CLInstance CL;
 
     private List<ProjectDirectory> _projectDirectories = new();
@@ -86,6 +99,7 @@ public partial class App : Application
     private bool _busy;
     private bool _interactible = true;
     private ProjectLoadFailInfo _failInfo = ProjectLoadFailInfo.Unknown;
+    private IReadOnlyCollection<Remediation> _remediations = Array.Empty<Remediation>();
     private readonly AutoResetEvent _are = new(true);
 
     public App()
@@ -114,62 +128,103 @@ public partial class App : Application
     public async Task AddProjectDirectoryAsync(string picked)
     {
         await WaitOneAsync(_are);
-        Interactible = false;
-        Busy = true;
-        var result = await CL.AddDirectoryAsync(picked);
-        if (result.Success) await CL.UpdateDirectoryAsync(result.Model);
-        UpdateProjectDirectories();
-        UpdateProjectDirectoryProjects();
-        Busy = false;
-        Interactible = true;
-        _are.Set();
+        try
+        {
+            Interactible = false;
+            Busy = true;
+            var result = await CL.AddDirectoryAsync(picked);
+            if (result.Success) await CL.UpdateDirectoryAsync(result.Model);
+            UpdateProjectDirectories();
+            UpdateProjectDirectoryProjects();
+        }
+        finally
+        {
+            Busy = false;
+            Interactible = true;
+            _are.Set();
+        }
     }
 
     public async Task RemoveProjectDirectoryAsync(string picked)
     {
         await WaitOneAsync(_are);
-        Interactible = false;
-        Busy = true;
-        bool success = await CL.RemoveDirectoryAsync(picked);
-        if (success)
+        try
         {
-            UpdateProjectDirectories();
-            UpdateProjectDirectoryProjects();
+            Interactible = false;
+            Busy = true;
+            bool success = await CL.RemoveDirectoryAsync(picked);
+            if (success)
+            {
+                UpdateProjectDirectories();
+                UpdateProjectDirectoryProjects();
+            }
         }
-        Busy = false;
-        Interactible = true;
-        _are.Set();
+        finally
+        {
+            Busy = false;
+            Interactible = true;
+            _are.Set();
+        }
     }
 
     public async Task UpdateProjectDirectoryProjectsAsync()
     {
         await WaitOneAsync(_are);
-        Interactible = false;
-        Busy = true;
-        await CL.UpdateAllDirectoriesAsync();
-        UpdateProjectDirectoryProjects();
-        Busy = false;
-        Interactible = true;
-        _are.Set();
+        try
+        {
+            Interactible = false;
+            Busy = true;
+            await CL.UpdateAllDirectoriesAsync();
+            UpdateProjectDirectoryProjects();
+        }
+        finally
+        {
+            Busy = false;
+            Interactible = true;
+            _are.Set();
+        }
     }
 
     public async Task LoadProjectAsync(string picked)
     {
         await WaitOneAsync(_are);
-        Interactible = false;
-        Busy = true;
-        if (await CL.FindProjectAsync(picked) is { } project)
+        try
         {
-            var result = await CL.LoadAsync(project);
-            if (!result.Success)
+            Interactible = false;
+            Busy = true;
+            if (await CL.FindProjectAsync(picked) is { } project)
             {
-                FailInfo = result.FailInfo ?? ProjectLoadFailInfo.Unknown;
-                await Shell.Current.GoToAsync("failed");
+                var result = await CL.LoadAsync(project);
+                if (!result.Success)
+                {
+                    FailInfo = result.FailInfo ?? ProjectLoadFailInfo.Unknown;
+                    Remediations = (IReadOnlyCollection<Remediation>?)result.FailInfo?.GetRemediations() ?? Array.Empty<Remediation>();
+                    await Shell.Current.GoToAsync("failed");
+                }
             }
         }
-        Busy = false;
-        Interactible = true;
-        _are.Set();
+        finally
+        {
+            Busy = false;
+            Interactible = true;
+            _are.Set();
+        }
+    }
+
+    public async Task RunRemediationAsync(Remediation remediation)
+    {
+        await WaitOneAsync(_are);
+        try
+        {
+            await remediation.Callback();
+            await Shell.Current.GoToAsync("..");
+        }
+        finally
+        {
+            Busy = false;
+            Interactible = true;
+            _are.Set();
+        }
     }
 
     private static CLConfiguration GetConfiguration()

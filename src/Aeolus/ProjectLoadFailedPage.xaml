@@ -3,12 +3,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Aeolus.ProjectLoadFailedPage"
              xmlns:local="clr-namespace:Aeolus"
+             xmlns:localmodelproxies="using:Aeolus.ModelProxies"
              BindingContext="{x:Static local:App.Me}"
              Title="{Binding FailInfo.Title}">
-    <VerticalStackLayout>
-        <Label
+    <ScrollView>
+        <VerticalStackLayout Margin="10,10">
+            <Label
             Text="{Binding FailInfo.ErrorMessage}"
             VerticalOptions="Center" 
             HorizontalOptions="Start" />
-    </VerticalStackLayout>
+            <CollectionView x:Name="remediationList"
+                            BindingContext="{x:Static local:App.Me}" ItemsSource="{Binding Remediations}" >
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <local:RemediationEntry />
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>
