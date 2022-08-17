@@ -3,56 +3,44 @@ using CrossLaunch.Models;
 
 namespace CrossLaunch.Ubiquitous.Formats;
 
-public class VSSolutionFile
+public record VisualStudioSolutionFile(string MinimumVisualStudioVersion, string VisualStudioVersion, IReadOnlyList<VisualStudioSolutionFileProject> ProjectDefinitions)
 {
-    public readonly string MinimumVisualStudioVersion;
-    public readonly string VisualStudioVersion;
-    public IReadOnlyList<ProjectDefinition> ProjectDefinitions;
-
-    public VSSolutionFile(string minimumVisualStudioVersion, string visualStudioVersion, IReadOnlyList<ProjectDefinition> projectDefinitions)
-    {
-        MinimumVisualStudioVersion = minimumVisualStudioVersion;
-        VisualStudioVersion = visualStudioVersion;
-        ProjectDefinitions = projectDefinitions;
-    }
-
-    public static VSSolutionFile Load(TextReader reader)
+    public static async Task<VisualStudioSolutionFile> LoadAsync(TextReader reader)
     {
         string? readLine;
-        while ((readLine = reader.ReadLine()) != null)
+        while ((readLine = await reader.ReadLineAsync()) != null)
             if (readLine.StartsWith("Microsoft Visual Studio Solution File"))
                 break;
         if (readLine == null) throw new InvalidDataException("Missing header");
-        ReadOnlySpan<char> visualStudioVersion = ReadOnlySpan<char>.Empty;
-        ReadOnlySpan<char> minimumVisualStudioVersion = ReadOnlySpan<char>.Empty;
-        while ((readLine = reader.ReadLine()) != null)
+        ReadOnlyMemory<char> visualStudioVersion = ReadOnlyMemory<char>.Empty;
+        ReadOnlyMemory<char> minimumVisualStudioVersion = ReadOnlyMemory<char>.Empty;
+        while ((readLine = await reader.ReadLineAsync()) != null)
         {
-            ReadOnlySpan<char> line = readLine;
+            ReadOnlyMemory<char> line = readLine.AsMemory();
             var l = line.TrimStart();
-            if (l.StartsWith("#")) continue;
-            if (TryGetKeyValue(l, "VisualStudioVersion", out var tmpVisualStudioVersion)) visualStudioVersion = tmpVisualStudioVersion;
-            if (TryGetKeyValue(l, "MinimumVisualStudioVersion", out var tmpMinimumVisualStudioVersion)) minimumVisualStudioVersion = tmpMinimumVisualStudioVersion;
+            if (l.Span.StartsWith("#")) continue;
+            if (TryGetKeyValue(l, "VisualStudioVersion".AsMemory(), out var tmpVisualStudioVersion)) visualStudioVersion = tmpVisualStudioVersion;
+            if (TryGetKeyValue(l, "MinimumVisualStudioVersion".AsMemory(), out var tmpMinimumVisualStudioVersion)) minimumVisualStudioVersion = tmpMinimumVisualStudioVersion;
             if (visualStudioVersion.Length != 0 && minimumVisualStudioVersion.Length != 0) break;
         }
         if (visualStudioVersion.Length == 0 || minimumVisualStudioVersion.Length == 0) throw new InvalidDataException("Missing version info");
-        ParseState state = new(new List<ProjectDefinition>());
-        ProcessSection(ReadOnlySpan<char>.Empty, ref state, reader);
-        return new VSSolutionFile(new string(minimumVisualStudioVersion), new string(visualStudioVersion), state.ProjectDefinitions);
+        ParseState state = new(new List<VisualStudioSolutionFileProject>());
+        await ProcessSection(ReadOnlyMemory<char>.Empty, state, reader);
+        return new VisualStudioSolutionFile(new string(minimumVisualStudioVersion.Span), new string(visualStudioVersion.Span), state.ProjectDefinitions);
     }
 
-    private static void ProcessSection(ReadOnlySpan<char> section, ref ParseState state, TextReader reader)
+    private static async Task ProcessSection(ReadOnlyMemory<char> section, ParseState state, TextReader reader)
     {
-        string? line;
-        while ((line = reader.ReadLine()) != null)
+        while (await reader.ReadLineAsync() is { } line)
         {
-            ReadOnlySpan<char> l = line.TrimStart();
-            if (section.Length != 0 && l.StartsWith("End") && l[3..].TrimEnd().SequenceEqual(section))
+            ReadOnlyMemory<char> l = line.TrimStart().AsMemory();
+            if (section.Length != 0 && l.Span.StartsWith("End") && l[3..].TrimEnd().Span.SequenceEqual(section.Span))
             {
                 return;
             }
-            ReadOnlySpan<char> key;
-            ReadOnlySpan<char> name = ReadOnlySpan<char>.Empty;
-            ReadOnlySpan<char> value;
+            ReadOnlyMemory<char> key;
+            ReadOnlyMemory<char> name = ReadOnlyMemory<char>.Empty;
+            ReadOnlyMemory<char> value;
             if (TryGetKeyValue(l, out var k1, out var v1))
             {
                 key = k1;
@@ -66,82 +54,82 @@ public class VSSolutionFile
             else
             {
                 key = l;
-                value = ReadOnlySpan<char>.Empty;
+                value = ReadOnlyMemory<char>.Empty;
             }
-            if (key.SequenceEqual("Project"))
+            if (key.Span.SequenceEqual("Project"))
             {
-                ProcessSection("Project", ref state, reader);
+                await ProcessSection("Project".AsMemory(), state, reader);
                 var nameEntries = ParseEntries(name);
                 var valueEntries = ParseEntries(value);
                 if (nameEntries.Count != 1) throw new InvalidDataException("Unexpected number of entries for Project element kind");
                 if (!Guid.TryParseExact(nameEntries[0], "B", out var nameGuid)) throw new InvalidDataException("Invalid GUID for Project element kind");
                 if (valueEntries.Count != 3) throw new InvalidDataException("Unexpected number of entries for Project element data");
                 if (!Guid.TryParseExact(valueEntries[2], "B", out var projectGuid)) throw new InvalidDataException("Invalid GUID for Project");
-                state.ProjectDefinitions.Add(new ProjectDefinition(nameGuid, valueEntries[0], valueEntries[1], projectGuid));
+                state.ProjectDefinitions.Add(new VisualStudioSolutionFileProject(nameGuid, valueEntries[0], valueEntries[1], projectGuid));
             }
-            else if (key.SequenceEqual("Global"))
+            else if (key.Span.SequenceEqual("Global"))
             {
-                ProcessSection("Global", ref state, reader);
+                await ProcessSection("Global".AsMemory(), state, reader);
             }
-            else if (key.SequenceEqual("GlobalSection"))
+            else if (key.Span.SequenceEqual("GlobalSection"))
             {
-                ProcessSection("GlobalSection", ref state, reader);
+                await ProcessSection("GlobalSection".AsMemory(), state, reader);
             }
         }
         if (section.Length != 0) throw new InvalidDataException("Unexpected EOF");
     }
 
-    private struct ParseState
+    private class ParseState
     {
-        public List<ProjectDefinition> ProjectDefinitions;
+        public List<VisualStudioSolutionFileProject> ProjectDefinitions;
 
-        public ParseState(List<ProjectDefinition> projectDefinitions)
+        public ParseState(List<VisualStudioSolutionFileProject> projectDefinitions)
         {
             ProjectDefinitions = projectDefinitions;
         }
     }
 
-    private static bool TryGetKeyValue(ReadOnlySpan<char> source, ReadOnlySpan<char> pattern, out ReadOnlySpan<char> result)
+    private static bool TryGetKeyValue(ReadOnlyMemory<char> source, ReadOnlyMemory<char> pattern, out ReadOnlyMemory<char> result)
     {
         source = source.TrimStart();
-        if (source.StartsWith(pattern))
+        if (source.Span.StartsWith(pattern.Span))
         {
             source = source[pattern.Length..].TrimStart();
-            if (source.StartsWith("="))
+            if (source.Span.StartsWith("="))
             {
                 result = source[1..].Trim();
                 return true;
             }
         }
-        result = ReadOnlySpan<char>.Empty;
+        result = ReadOnlyMemory<char>.Empty;
         return false;
     }
 
-    private static bool TryGetKeyValue(ReadOnlySpan<char> source, out ReadOnlySpan<char> key, out ReadOnlySpan<char> value)
+    private static bool TryGetKeyValue(ReadOnlyMemory<char> source, out ReadOnlyMemory<char> key, out ReadOnlyMemory<char> value)
     {
-        int index = source.IndexOf('=');
+        int index = source.Span.IndexOf('=');
         if (index != -1)
         {
             key = source[..index].Trim();
             value = source[(index + 1)..].Trim();
             return true;
         }
-        key = ReadOnlySpan<char>.Empty;
-        value = ReadOnlySpan<char>.Empty;
+        key = ReadOnlyMemory<char>.Empty;
+        value = ReadOnlyMemory<char>.Empty;
         return false;
     }
 
-    private static bool TryGetNamedKey(ReadOnlySpan<char> key, out ReadOnlySpan<char> keyType, out ReadOnlySpan<char> keyName)
+    private static bool TryGetNamedKey(ReadOnlyMemory<char> key, out ReadOnlyMemory<char> keyType, out ReadOnlyMemory<char> keyName)
     {
-        int index = key.IndexOf('(');
-        if (index != -1 && key[^1] == ')')
+        int index = key.Span.IndexOf('(');
+        if (index != -1 && key.Span[^1] == ')')
         {
             keyType = key[..index];
             keyName = key[(index + 1)..^1];
             return true;
         }
-        keyType = ReadOnlySpan<char>.Empty;
-        keyName = ReadOnlySpan<char>.Empty;
+        keyType = ReadOnlyMemory<char>.Empty;
+        keyName = ReadOnlyMemory<char>.Empty;
         return false;
     }
 
@@ -163,8 +151,9 @@ public class VSSolutionFile
         return false;
     }
 
-    private static List<string> ParseEntries(ReadOnlySpan<char> buf)
+    private static List<string> ParseEntries(ReadOnlyMemory<char> src)
     {
+        var buf = src.Span;
         var res = new List<string>();
         buf = buf.Trim();
         while (!buf.IsEmpty)
@@ -181,6 +170,6 @@ public class VSSolutionFile
         }
         return res;
     }
-
-    public record ProjectDefinition(Guid Kind, string Directory, string File, Guid Guid);
 }
+
+public record VisualStudioSolutionFileProject(Guid Kind, string Directory, string File, Guid Guid);

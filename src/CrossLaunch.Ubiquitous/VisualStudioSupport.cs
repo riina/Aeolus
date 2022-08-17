@@ -8,17 +8,13 @@ public class VisualStudioSupport : FileSupportBase<VisualStudioProjectLoader>
 {
     public override string FriendlyPlatformName => "Visual Studio";
 
-    public override Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default)
+    public override async Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(".sln".Equals(Path.GetExtension(path), StringComparison.InvariantCultureIgnoreCase) ? EvaluateProject(path) : null);
-    }
-
-    private static EvaluatedProject? EvaluateProject(string path)
-    {
+        if (!".sln".Equals(Path.GetExtension(path), StringComparison.InvariantCultureIgnoreCase)) return null;
         try
         {
             using var stream = File.OpenText(path);
-            var solution = VSSolutionFile.Load(stream);
+            var solution = await VisualStudioSolutionFile.LoadAsync(stream);
             var sb = new StringBuilder();
             sb.Append(solution.MinimumVisualStudioVersion).Append('/').Append(solution.VisualStudioVersion);
             return new EvaluatedProject(Path.GetFullPath(path), sb.ToString());
@@ -31,7 +27,7 @@ public class VisualStudioSupport : FileSupportBase<VisualStudioProjectLoader>
 
     public override string GetDisplayFramework(BaseProjectModel project)
     {
-        return VSSolutionFile.TryGetMinimumVisualStudio(project, out string? result) ? result : project.Framework;
+        return VisualStudioSolutionFile.TryGetMinimumVisualStudio(project, out string? result) ? result : project.Framework;
     }
 }
 
@@ -39,18 +35,18 @@ public class VisualStudioProjectLoader : IProjectLoader
 {
     private static readonly HashSet<Guid> s_riderTypes = new HashSet<Guid>() { Guid.ParseExact("9a19103f-16f7-4668-be54-9a1e7a4f7556", "D"), Guid.ParseExact("fae04ec0-301f-11d3-bf4b-00c04f79efbc", "D") };
 
-    public Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration)
+    public async Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration)
     {
-        if (!VSSolutionFile.TryGetMinimumVisualStudio(project, out string? framework)) return Task.FromResult(ProjectLoadResult.BadFrameworkId(project.Framework));
-        VSSolutionFile solutionFile;
+        if (!VisualStudioSolutionFile.TryGetMinimumVisualStudio(project, out string? framework)) return ProjectLoadResult.BadFrameworkId(project.Framework);
+        VisualStudioSolutionFile solutionFile;
         try
         {
             using var stream = File.OpenText(project.FullPath);
-            solutionFile = VSSolutionFile.Load(stream);
+            solutionFile = await VisualStudioSolutionFile.LoadAsync(stream);
         }
         catch (InvalidDataException)
         {
-            return Task.FromResult(ProjectLoadResult.InvalidFile);
+            return ProjectLoadResult.InvalidFile;
         }
         var remediations = new List<ProjectLoadFailRemediation>();
         if (configuration.TryGetFlag("visualstudio.rider.enable", out _))
@@ -73,7 +69,7 @@ public class VisualStudioProjectLoader : IProjectLoader
                 if (exePath != null)
                 {
                     ProcessUtils.Start(exePath, Path.GetDirectoryName(project.FullPath) ?? "");
-                    return Task.FromResult(ProjectLoadResult.Successful);
+                    return ProjectLoadResult.Successful;
                 }
                 remediations.Add(new ProjectLoadFailRemediation("Get JetBrains Rider", @"Install JetBrains Rider, a feature-rich proprietary IDE primarily for .NET development.
 https://www.jetbrains.com/rider/", ProcessUtils.GetUriCallback("https://www.jetbrains.com/rider/")));
@@ -89,7 +85,7 @@ https://www.jetbrains.com/rider/", ProcessUtils.GetUriCallback("https://www.jetb
             if (exePath != null)
             {
                 ProcessUtils.Start(exePath, Path.GetDirectoryName(project.FullPath) ?? "");
-                return Task.FromResult(ProjectLoadResult.Successful);
+                return ProjectLoadResult.Successful;
             }
             remediations.Add(new ProjectLoadFailRemediation("Get Visual Studio Code", @"Install Visual Studio Code from Microsoft Corporation, a lightweight proprietary code editor.
 https://code.visualstudio.com/", ProcessUtils.GetUriCallback("https://code.visualstudio.com/")));
@@ -106,9 +102,9 @@ https://visualstudio.microsoft.com/vs/", ProcessUtils.GetUriCallback("https://vi
             remediations.Add(new ProjectLoadFailRemediation("Get Visual Studio for Mac", @"Install Visual Studio for Mac from Microsoft Corporation, a proprietary IDE primarily for .NET and Xamarin development.
 https://visualstudio.microsoft.com/vs/mac/", ProcessUtils.GetUriCallback("https://visualstudio.microsoft.com/vs/mac/")));
         }
-        return Task.FromResult(ProjectLoadResult.Failure("No Valid Program Found", @"Failed to identify software capable of opening this Visual Studio solution file.
+        return ProjectLoadResult.Failure("No Valid Program Found", @"Failed to identify software capable of opening this Visual Studio solution file.
 
-A program such as Visual Studio or Rider must be installed.", remediations.ToArray()));
+A program such as Visual Studio or Rider must be installed.", remediations.ToArray());
     }
 
     private static string? GetMaxRiderFolder(string dir) =>
