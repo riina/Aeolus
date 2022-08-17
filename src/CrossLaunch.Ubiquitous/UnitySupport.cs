@@ -10,7 +10,7 @@ public class UnitySupport : FolderSupportBase<UnityProjectLoader>
 
     public override async Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default)
     {
-        var loadResult = await UnityProject.LoadAsync(path);
+        var loadResult = await UnityProject.ParseAsync(path);
         return loadResult.Result is { } result ? new EvaluatedProject(Path.GetFullPath(path), result.FrameworkString) : null;
     }
 
@@ -22,7 +22,7 @@ public class UnityProjectLoader : ProjectLoaderBase
 {
     public override async Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration)
     {
-        var loadResult = await UnityProject.LoadAsync(project.FullPath);
+        var loadResult = await UnityProject.ParseAsync(project.FullPath);
         if (loadResult.Result is not { } result) return loadResult.FailInfo?.AsProjectLoadResult() ?? ProjectLoadResult.Unknown;
         return await result.TryLoadAsync(configuration);
     }

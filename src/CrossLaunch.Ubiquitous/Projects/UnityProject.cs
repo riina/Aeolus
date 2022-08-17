@@ -8,7 +8,7 @@ public record UnityProject(string FullPath, UnityProjectVersionFile ProjectVersi
 {
     public override string FrameworkString => $"{ProjectVersionFile.Version.EditorVersion}/{ProjectVersionFile.Version.Revision}";
 
-    public static async Task<ProjectParseResult<UnityProject>> LoadAsync(string path)
+    public static async Task<ProjectParseResult<UnityProject>> ParseAsync(string path)
     {
         string projectFile = Path.Combine(path, "ProjectSettings", "ProjectVersion.txt");
         if (!File.Exists(projectFile)) return ProjectParseResult<UnityProject>.Missing;

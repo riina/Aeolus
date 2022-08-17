@@ -9,7 +9,7 @@ public record VisualStudioSolution(string FullPath, VisualStudioSolutionFile Sol
 {
     public override string FrameworkString => $"{SolutionFile.MinimumVisualStudioVersion}/{SolutionFile.VisualStudioVersion}";
 
-    public static async Task<ProjectParseResult<VisualStudioSolution>> LoadAsync(string path)
+    public static async Task<ProjectParseResult<VisualStudioSolution>> ParseAsync(string path)
     {
         if (!".sln".Equals(Path.GetExtension(path), StringComparison.InvariantCultureIgnoreCase)) return ProjectParseResult<VisualStudioSolution>.InvalidExtension;
         try

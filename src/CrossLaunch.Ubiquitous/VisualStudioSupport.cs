@@ -9,7 +9,7 @@ public class VisualStudioSupport : FileSupportBase<VisualStudioProjectLoader>
 
     public override async Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default)
     {
-        var loadResult = await VisualStudioSolution.LoadAsync(path);
+        var loadResult = await VisualStudioSolution.ParseAsync(path);
         return loadResult.Result is { } result ? new EvaluatedProject(Path.GetFullPath(path), result.FrameworkString) : null;
     }
 
@@ -21,7 +21,7 @@ public class VisualStudioProjectLoader : IProjectLoader
 {
     public async Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration)
     {
-        var loadResult = await VisualStudioSolution.LoadAsync(project.FullPath);
+        var loadResult = await VisualStudioSolution.ParseAsync(project.FullPath);
         if (loadResult.Result is not { } result) return loadResult.FailInfo?.AsProjectLoadResult() ?? ProjectLoadResult.Unknown;
         return await result.TryLoadAsync(configuration);
     }
