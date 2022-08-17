@@ -15,7 +15,7 @@
                 <Button Style="{DynamicResource smolBtnStyle}"
                 x:Name="RefreshBtn"
                 Text="Refresh"
-                SemanticProperties.Hint="Refresh"
+                SemanticProperties.Hint="Refresh project list"
                 Clicked="RefreshBtn_Clicked"
                 HorizontalOptions="Start" />
                 <ActivityIndicator BindingContext="{x:Static local:App.Me}" IsRunning="{Binding Busy}" />

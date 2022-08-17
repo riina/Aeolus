@@ -73,6 +73,20 @@ public partial class App : Application
         _are.Set();
     }
 
+    public async Task RemoveProjectDirectoryAsync(string picked)
+    {
+        _are.WaitOne();
+        Busy = true;
+        bool success = await CL.RemoveDirectoryAsync(picked);
+        if (success)
+        {
+            UpdateProjectDirectories();
+            UpdateProjectDirectoryProjects();
+        }
+        Busy = false;
+        _are.Set();
+    }
+
     public async Task UpdateProjectDirectoryProjectsAsync()
     {
         _are.WaitOne();

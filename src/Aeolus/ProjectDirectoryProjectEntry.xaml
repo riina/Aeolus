@@ -4,8 +4,8 @@
              xmlns:localmodelproxies="using:Aeolus.ModelProxies"
              x:Class="Aeolus.ProjectDirectoryProjectEntry"
              x:DataType="localmodelproxies:ProjectDirectoryProject">
-    <VerticalStackLayout>
-        <Grid HeightRequest="50">
+    <VerticalStackLayout HeightRequest="50">
+        <Grid VerticalOptions="Fill">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="*" />
