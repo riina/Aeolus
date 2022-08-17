@@ -23,7 +23,7 @@
             <CollectionView x:Name="projectList" x:DataType="localmodelproxies:ProjectDirectoryProject">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <Grid>
+                        <Grid HeightRequest="50">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="2*" />
                                 <ColumnDefinition Width="*" />
