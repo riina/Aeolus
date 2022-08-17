@@ -4,7 +4,7 @@
              xmlns:local="clr-namespace:Aeolus"
              xmlns:localmodelproxies="using:Aeolus.ModelProxies"
              x:Class="Aeolus.ProjectDirectoryProjectEntry">
-    <VerticalStackLayout HeightRequest="50">
+    <VerticalStackLayout>
         <Grid VerticalOptions="Fill">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -12,8 +12,8 @@
                 <ColumnDefinition Width="50" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="2*" />
-                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" Grid.Row="0" Grid.Column="0" x:DataType="localmodelproxies:ProjectDirectoryProject" />
