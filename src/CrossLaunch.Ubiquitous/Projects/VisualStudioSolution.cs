@@ -103,7 +103,7 @@ https://code.visualstudio.com/", ProcessUtils.GetUriCallback("https://code.visua
                 proc.StartInfo.UseShellExecute = false;
                 proc.StartInfo.RedirectStandardOutput = true;
                 string? line = null;
-                proc.OutputDataReceived += (sender, args) => line ??= args.Data;
+                proc.OutputDataReceived += (_, args) => line ??= args.Data;
                 proc.Start();
                 proc.BeginOutputReadLine();
                 await proc.WaitForExitAsync();
