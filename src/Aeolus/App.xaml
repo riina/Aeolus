@@ -32,6 +32,9 @@
                             </VisualStateGroupList>
                         </Setter>
                     </Style>
+                    <Style x:Key="unstyledBtnStyle" TargetType="Button">
+                        <Setter Property="CornerRadius" Value="0"/>
+                    </Style>
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

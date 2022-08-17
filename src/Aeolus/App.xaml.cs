@@ -113,7 +113,7 @@ public partial class App : Application
 
     public async Task AddProjectDirectoryAsync(string picked)
     {
-        _are.WaitOne();
+        await WaitOneAsync(_are);
         Interactible = false;
         Busy = true;
         var result = await CL.AddDirectoryAsync(picked);
@@ -127,7 +127,7 @@ public partial class App : Application
 
     public async Task RemoveProjectDirectoryAsync(string picked)
     {
-        _are.WaitOne();
+        await WaitOneAsync(_are);
         Interactible = false;
         Busy = true;
         bool success = await CL.RemoveDirectoryAsync(picked);
@@ -143,7 +143,7 @@ public partial class App : Application
 
     public async Task UpdateProjectDirectoryProjectsAsync()
     {
-        _are.WaitOne();
+        await WaitOneAsync(_are);
         Interactible = false;
         Busy = true;
         await CL.UpdateAllDirectoriesAsync();
@@ -155,7 +155,7 @@ public partial class App : Application
 
     public async Task LoadProjectAsync(string picked)
     {
-        _are.WaitOne();
+        await WaitOneAsync(_are);
         Interactible = false;
         Busy = true;
         if (await CL.FindProjectAsync(picked) is { } project)
@@ -172,7 +172,7 @@ public partial class App : Application
         _are.Set();
     }
 
-    static CLConfiguration GetConfiguration()
+    private static CLConfiguration GetConfiguration()
     {
         var evaluators = TypeTool.CreateInstances<IProjectEvaluator>(TypeTool.GetConcreteInterfaceImplementors<IProjectEvaluator>(typeof(Anchor9)));
         var cfg = new CLConfiguration { Evaluators = evaluators, MaxRecentProjects = 10, MaxDepth = 3 };
@@ -190,9 +190,14 @@ public partial class App : Application
         return cfg;
     }
 
-    static void WriteConfiguration(string cfgFile, IReadOnlyDictionary<string, JsonElement> options)
+    private static void WriteConfiguration(string cfgFile, IReadOnlyDictionary<string, JsonElement> options)
     {
         using var stream = File.Create(cfgFile);
         CLConfiguration.SerializeOptions(options, stream);
+    }
+
+    private static async Task WaitOneAsync(WaitHandle waitHandle, int msDelay = 10, int taskMsDelay = 10, CancellationToken cancellationToken = default)
+    {
+        while (!waitHandle.WaitOne(msDelay)) await Task.Delay(taskMsDelay, cancellationToken);
     }
 }
