@@ -3,26 +3,19 @@ using CrossLaunch.Ubiquitous.Projects;
 
 namespace CrossLaunch.Ubiquitous;
 
-public class VisualStudioSupport : FileSupportBase<VisualStudioProjectLoader>
+public class VisualStudioSupport : FileSupportBase<VisualStudioSupport.Loader>
 {
     public override string FriendlyPlatformName => "Visual Studio";
 
     public override async Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default)
-    {
-        var loadResult = await VisualStudioSolution.ParseAsync(path);
-        return loadResult.Result is { } result ? new EvaluatedProject(Path.GetFullPath(path), result.FrameworkString) : null;
-    }
+        => (await VisualStudioSolution.ParseAsync(path)).Result?.AsEvaluatedProject();
 
     public override string GetDisplayFramework(BaseProjectModel project)
         => VisualStudioSolution.TryGetDisplayFramework(project, out string? result) ? result : project.Framework;
-}
 
-public class VisualStudioProjectLoader : IProjectLoader
-{
-    public async Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration)
+    public class Loader : ParsedProjectLoader<VisualStudioSolution>
     {
-        var loadResult = await VisualStudioSolution.ParseAsync(project.FullPath);
-        if (loadResult.Result is not { } result) return loadResult.FailInfo?.AsProjectLoadResult() ?? ProjectLoadResult.Unknown;
-        return await result.TryLoadAsync(configuration);
+        protected override async Task<ProjectParseResult<VisualStudioSolution>> ParseAsync(string path)
+            => await VisualStudioSolution.ParseAsync(path);
     }
 }

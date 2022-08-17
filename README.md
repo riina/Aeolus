@@ -2,6 +2,24 @@
 
 TODO: A MAUI application for Windows and macOS meant for no-nonsense jumping into projects.
 
+## Supported Project Types
+
+### Visual Studio
+
+Support for opening Visual Studio solutions.
+
+Allows Visual Studio and Visual Studio for Mac by default.
+
+Options:
+
+- `visualstudio.vscode.enable`: enable Visual Studio Code
+
+- `visualstudio.rider.enable`: enable JetBrains Rider
+
+### Unity
+
+Support for opening Unity projects with Unity Editor installations from Unity Hub.
+
 # cl
 
 A terminal program for simple project launching.
