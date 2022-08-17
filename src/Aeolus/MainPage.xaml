@@ -43,9 +43,14 @@
                                 <ColumnDefinition Width="2*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="2*" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
 
-                            <Label Text="{Binding Name}" />
-                            <Label Grid.Column="1" Text="{Binding SoftwareAndFramework}" />
+                            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" Grid.Row="0" Grid.Column="0"/>
+                            <Label Text="{Binding FullPath}" FontSize="12" Grid.Row="1" Grid.Column="0" />
+                            <Label Text="{Binding SoftwareAndFramework}" FontSize="12" Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" />
                         </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
