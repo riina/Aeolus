@@ -17,10 +17,21 @@ public partial class CLConfiguration
 
     public IReadOnlyDictionary<string, JsonElement> Options { get; set; } = ImmutableDictionary<string, JsonElement>.Empty;
 
+    public static IReadOnlyDictionary<string, JsonElement> LoadOptions(Stream stream)
+    {
+        IReadOnlyDictionary<string, JsonElement>? dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(stream, s_serializerOptions);
+        return dict != null ? new Dictionary<string, JsonElement>(dict, StringComparer.InvariantCultureIgnoreCase) : ImmutableDictionary<string, JsonElement>.Empty;
+    }
+
     public static async Task<IReadOnlyDictionary<string, JsonElement>> LoadOptionsAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         IReadOnlyDictionary<string, JsonElement>? dict = await JsonSerializer.DeserializeAsync<Dictionary<string, JsonElement>>(stream, s_serializerOptions, cancellationToken);
         return dict != null ? new Dictionary<string, JsonElement>(dict, StringComparer.InvariantCultureIgnoreCase) : ImmutableDictionary<string, JsonElement>.Empty;
+    }
+
+    public static void SerializeOptions(IReadOnlyDictionary<string, JsonElement> options, Stream stream)
+    {
+        JsonSerializer.Serialize(stream, options, s_serializerOptions);
     }
 
     public static async Task SerializeOptionsAsync(IReadOnlyDictionary<string, JsonElement> options, Stream stream, CancellationToken cancellationToken = default)

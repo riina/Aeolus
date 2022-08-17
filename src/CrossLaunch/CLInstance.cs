@@ -1,30 +1,34 @@
 using System.Diagnostics.CodeAnalysis;
-using CrossLaunch;
 using CrossLaunch.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace cl;
+namespace CrossLaunch;
 
 public sealed class CLInstance : IDisposable
 {
     public IReadOnlyDictionary<Type, IProjectEvaluator> TypeMap => _typeMap;
     private readonly Dictionary<Type, IProjectEvaluator> _typeMap;
-    public readonly CLContext Db;
+    public readonly CLContextBase Db;
     public readonly CLConfiguration Configuration;
     private bool _disposed;
 
-    public CLInstance(Dictionary<Type, IProjectEvaluator> typeMap, CLContext db, CLConfiguration configuration)
+    public CLInstance(Dictionary<Type, IProjectEvaluator> typeMap, CLContextBase db, CLConfiguration configuration)
     {
         _typeMap = typeMap;
         Db = db;
         Configuration = configuration;
     }
 
-    public static async Task<CLInstance> CreateAsync(CLConfiguration configuration)
+    public static CLInstance Create(CLConfiguration configuration, CLContextBase db)
     {
         Dictionary<Type, IProjectEvaluator> typeMap = configuration.Evaluators.ToDictionary(v => v.GetType());
-        var dbFac = new CLContextFactory();
-        var db = dbFac.CreateDbContext(Array.Empty<string>());
+        db.Database.Migrate();
+        return new CLInstance(typeMap, db, configuration);
+    }
+
+    public static async Task<CLInstance> CreateAsync(CLConfiguration configuration, CLContextBase db)
+    {
+        Dictionary<Type, IProjectEvaluator> typeMap = configuration.Evaluators.ToDictionary(v => v.GetType());
         await db.Database.MigrateAsync();
         return new CLInstance(typeMap, db, configuration);
     }

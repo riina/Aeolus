@@ -11,7 +11,8 @@ public class AeolusDbContextFactory : IDesignTimeDbContextFactory<AeolusDbContex
     public AeolusDbContext CreateDbContext(string[] args)
     {
         var ob = new DbContextOptionsBuilder<AeolusDbContext>();
-        ob.UseSqlite($"Data Source=tmp_aeolus.db;",
+        Directory.CreateDirectory(AeolusFiles.DataDirectory);
+        ob.UseSqlite(@$"Data Source=""{Path.Combine(AeolusFiles.DataDirectory, "cl.db")}"";",
             b => b.MigrationsAssembly(MigrationAssembly.FullName));
         ob.UseLazyLoadingProxies();
         return new AeolusDbContext(ob.Options);

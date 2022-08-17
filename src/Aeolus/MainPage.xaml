@@ -29,24 +29,27 @@
                 HorizontalOptions="Center" />
 
             <Button
-                x:Name="CounterBtn"
-                Text="Click me"
-                SemanticProperties.Hint="Counts the number of times you click"
-                Clicked="OnCounterClicked"
-                HorizontalOptions="Center" />
-
-            <Button
                 x:Name="OpenFolderBtn"
                 Text="Open Folder..."
                 SemanticProperties.Hint="Opens a folder"
                 Clicked="OnOpenFolderClicked"
                 HorizontalOptions="Center" />
 
-            <Label
-                x:Name="SelectionButton"
-                Text="Selection goes here..."
-                FontSize="12"
-                HorizontalOptions="Center" />
+            <CollectionView x:Name="projectList">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Label Text="{Binding Name}" />
+                            <Label Grid.Column="1" Text="{Binding SoftwareAndFramework}" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
 
         </VerticalStackLayout>
     </ScrollView>
