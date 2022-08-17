@@ -12,21 +12,15 @@
             Spacing="10"
             Padding="10,0"
             VerticalOptions="StartAndExpand">
-            <HorizontalStackLayout Spacing="10">
+            <HorizontalStackLayout Spacing="10" HorizontalOptions="End" >
+                <ActivityIndicator IsRunning="{Binding Busy}" />
                 <Button Style="{DynamicResource smolBtnStyle}"
                 x:Name="RefreshBtn"
                 Text="Refresh"
                 SemanticProperties.Hint="Refresh project list"
                 Clicked="RefreshBtn_Clicked"
                 IsEnabled="{Binding Busy, Converter={StaticResource InvertedBoolConverter}}"
-                HorizontalOptions="Start" />
-                <Button Style="{DynamicResource smolBtnStyle}"
-                x:Name="SimulateErrorBtn"
-                Text="Simulate Error"
-                SemanticProperties.Hint="Simulate an error"
-                Clicked="SimulateErrorBtn_Clicked"
-                HorizontalOptions="Start" />
-                <ActivityIndicator IsRunning="{Binding Busy}" />
+                HorizontalOptions="End" />
             </HorizontalStackLayout>
 
             <CollectionView x:Name="projectList"
