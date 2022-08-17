@@ -24,44 +24,6 @@ public class UnityProjectLoader : ProjectLoaderBase
     {
         var loadResult = await UnityProject.LoadAsync(project.FullPath);
         if (loadResult.Result is not { } result) return loadResult.FailInfo?.AsProjectLoadResult() ?? ProjectLoadResult.Unknown;
-        var version = result.ProjectVersionFile.Version;
-        string[] searchLocations;
-        string[] hubLocations;
-        if (OperatingSystem.IsWindows())
-        {
-            const string editorFormat = @"Editor\Unity.exe";
-            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            searchLocations = new[] { Path.Combine(programFiles, @"Unity\Hub\Editor", version.EditorVersion, editorFormat) };
-            hubLocations = new[] { Path.Combine(programFiles, @"Unity Hub\Unity Hub.exe") };
-        }
-        else if (OperatingSystem.IsMacOS())
-        {
-            const string editorFormat = "Unity.app/Contents/MacOS/Unity";
-            searchLocations = new[] { Path.Combine("/Applications/Unity/Hub/Editor", version.EditorVersion, editorFormat) };
-            hubLocations = new[] { "/Applications/Unity Hub.app/Contents/MacOS/Unity Hub" };
-        }
-        else return ProjectLoadResult.Failure("Unsupported OS", "This operating system is not supported");
-        string? first = searchLocations.FirstOrDefault(File.Exists);
-        if (first == null)
-        {
-            string message = @$"Unity Editor version {version.EditorVersion} is required for this project but is not currently installed.
-
-The required Unity Editor version can be installed through Unity Hub or from the Unity Download Archive.
-
-https://unity3d.com/get-unity/download/archive";
-            if (OperatingSystem.IsMacOS())
-                message += @"
-
-Warning: Due to unityhub:// link limitations and Unity Hub limitations, Apple Silicon editors may not be installable except through .dmg images from the Unity Download Archive.";
-            List<ProjectLoadFailRemediation> remediations = new();
-            remediations.Add(new ProjectLoadFailRemediation("Open Unity Download Archive in Browser", @$"Install Unity Editor {version.EditorVersion} from the Unity Download Archive.
-https://unity3d.com/get-unity/download/archive", ProcessUtils.GetUriCallback("https://unity3d.com/get-unity/download/archive")));
-            if (hubLocations.Any(File.Exists))
-                remediations.Insert(0, new ProjectLoadFailRemediation("Install With Hub", @$"Open Unity Hub with Unity Editor {version.EditorVersion} selected for install.
-unityhub://{version.EditorVersion}/{version.Revision}", ProcessUtils.GetUriCallback($"unityhub://{version.EditorVersion}/{version.Revision}")));
-            return ProjectLoadResult.Failure($"Unity Editor {version.EditorVersion} Not Installed", message, remediations.ToArray());
-        }
-        ProcessUtils.Start(first, "-projectPath", project.FullPath);
-        return ProjectLoadResult.Successful;
+        return await result.TryLoadAsync(configuration);
     }
 }
