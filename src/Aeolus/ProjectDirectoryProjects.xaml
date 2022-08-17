@@ -6,12 +6,12 @@
 
     <ScrollView>
         <VerticalStackLayout
-            Spacing="25"
-            Padding="30,0"
+            Spacing="10"
+            Padding="10,0"
             VerticalOptions="StartAndExpand">
 
-            <HorizontalStackLayout Spacing="25">
-                <Button
+            <HorizontalStackLayout Spacing="10">
+                <Button Style="{DynamicResource smolBtnStyle}"
                 x:Name="RefreshBtn"
                 Text="Refresh"
                 SemanticProperties.Hint="Refresh"
