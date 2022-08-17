@@ -1,6 +1,6 @@
-using System.Text;
 using CrossLaunch.Models;
 using CrossLaunch.Ubiquitous.Formats;
+using CrossLaunch.Ubiquitous.Projects;
 
 namespace CrossLaunch.Ubiquitous;
 
@@ -10,44 +10,23 @@ public class VisualStudioSupport : FileSupportBase<VisualStudioProjectLoader>
 
     public override async Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default)
     {
-        if (!".sln".Equals(Path.GetExtension(path), StringComparison.InvariantCultureIgnoreCase)) return null;
-        try
-        {
-            using var stream = File.OpenText(path);
-            var solution = await VisualStudioSolutionFile.LoadAsync(stream);
-            var sb = new StringBuilder();
-            sb.Append(solution.MinimumVisualStudioVersion).Append('/').Append(solution.VisualStudioVersion);
-            return new EvaluatedProject(Path.GetFullPath(path), sb.ToString());
-        }
-        catch (InvalidDataException)
-        {
-            return null;
-        }
+        var loadResult = await VisualStudioSolution.LoadAsync(path);
+        return loadResult.Result is { } result ? new EvaluatedProject(Path.GetFullPath(path), result.FrameworkString) : null;
     }
 
     public override string GetDisplayFramework(BaseProjectModel project)
-    {
-        return VisualStudioSolutionFile.TryGetMinimumVisualStudio(project, out string? result) ? result : project.Framework;
-    }
+        => VisualStudioSolution.TryGetDisplayFramework(project, out string? result) ? result : project.Framework;
 }
 
 public class VisualStudioProjectLoader : IProjectLoader
 {
-    private static readonly HashSet<Guid> s_riderTypes = new HashSet<Guid>() { Guid.ParseExact("9a19103f-16f7-4668-be54-9a1e7a4f7556", "D"), Guid.ParseExact("fae04ec0-301f-11d3-bf4b-00c04f79efbc", "D") };
+    private static readonly HashSet<Guid> s_riderTypes = new() { Guid.ParseExact("9a19103f-16f7-4668-be54-9a1e7a4f7556", "D"), Guid.ParseExact("fae04ec0-301f-11d3-bf4b-00c04f79efbc", "D") };
 
     public async Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration)
     {
-        if (!VisualStudioSolutionFile.TryGetMinimumVisualStudio(project, out string? framework)) return ProjectLoadResult.BadFrameworkId(project.Framework);
-        VisualStudioSolutionFile solutionFile;
-        try
-        {
-            using var stream = File.OpenText(project.FullPath);
-            solutionFile = await VisualStudioSolutionFile.LoadAsync(stream);
-        }
-        catch (InvalidDataException)
-        {
-            return ProjectLoadResult.InvalidFile;
-        }
+        var loadResult = await VisualStudioSolution.LoadAsync(project.FullPath);
+        if (loadResult.Result is not { } result) return loadResult.FailInfo?.AsProjectLoadResult() ?? ProjectLoadResult.Unknown;
+        VisualStudioSolutionFile solutionFile = result.SolutionFile;
         var remediations = new List<ProjectLoadFailRemediation>();
         if (configuration.TryGetFlag("visualstudio.rider.enable", out _))
         {

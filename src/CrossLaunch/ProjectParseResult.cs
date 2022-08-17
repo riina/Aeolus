@@ -4,12 +4,16 @@ public record ProjectParseResult<T>(T? Result, ProjectParseFailInfo? FailInfo = 
 {
     public static ProjectParseResult<T> Missing => new(null, ProjectParseFailInfo.Missing);
 
+    public static ProjectParseResult<T> InvalidExtension => new(null, ProjectParseFailInfo.InvalidExtension);
+
     public static ProjectParseResult<T> InvalidFile => new(null, ProjectParseFailInfo.InvalidFile);
 }
 
 public record ProjectParseFailInfo(string Title, string ErrorMessage)
 {
     public static readonly ProjectParseFailInfo Missing = new("Missing Files", "Project is missing required files");
+
+    public static readonly ProjectParseFailInfo InvalidExtension = new("Invalid File Extension", "Project file(s) did not have an appropriate file extension.");
 
     public static readonly ProjectParseFailInfo InvalidFile = new("Invalid Project File(s)", "Project file(s) could not be read.");
 

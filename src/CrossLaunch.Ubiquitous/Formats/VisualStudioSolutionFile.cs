@@ -1,6 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using CrossLaunch.Models;
-
 namespace CrossLaunch.Ubiquitous.Formats;
 
 public record VisualStudioSolutionFile(string MinimumVisualStudioVersion, string VisualStudioVersion, IReadOnlyList<VisualStudioSolutionFileProject> ProjectDefinitions)
@@ -130,24 +127,6 @@ public record VisualStudioSolutionFile(string MinimumVisualStudioVersion, string
         }
         keyType = ReadOnlyMemory<char>.Empty;
         keyName = ReadOnlyMemory<char>.Empty;
-        return false;
-    }
-
-    public static bool TryGetMinimumVisualStudio(BaseProjectModel project, [NotNullWhen(true)] out string? result)
-    {
-        ReadOnlySpan<char> slice = project.Framework;
-        int index = slice.IndexOf('/');
-        if (index != -1)
-        {
-            slice = slice[..index];
-            int index2 = slice.IndexOf('.');
-            if (index2 != -1)
-            {
-                result = new string(slice[..index2]);
-                return true;
-            }
-        }
-        result = null;
         return false;
     }
 

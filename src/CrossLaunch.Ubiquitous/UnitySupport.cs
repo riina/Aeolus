@@ -1,5 +1,5 @@
 ﻿using CrossLaunch.Models;
-using CrossLaunch.Ubiquitous.Formats;
+using CrossLaunch.Ubiquitous.Projects;
 
 namespace CrossLaunch.Ubiquitous;
 
@@ -11,11 +11,11 @@ public class UnitySupport : FolderSupportBase<UnityProjectLoader>
     public override async Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default)
     {
         var loadResult = await UnityProject.LoadAsync(path);
-        return loadResult.Result is { } result ? new EvaluatedProject(Path.GetFullPath(path), result.ProjectVersionFile.Version.Combined) : null;
+        return loadResult.Result is { } result ? new EvaluatedProject(Path.GetFullPath(path), result.FrameworkString) : null;
     }
 
-    public override string GetDisplayFramework(BaseProjectModel project) =>
-        UnityVersion.TryParseFromCombined(project.Framework, out var unityVersion) ? unityVersion.EditorVersion : project.Framework;
+    public override string GetDisplayFramework(BaseProjectModel project)
+        => UnityProject.TryGetDisplayFramework(project, out string? result) ? result : project.Framework;
 }
 
 public class UnityProjectLoader : ProjectLoaderBase

@@ -27,6 +27,4 @@ public readonly record struct UnityVersion(string EditorVersion, string Revision
         parsed = new UnityVersion(combined[..index], combined[(index + 1)..]);
         return true;
     }
-
-    public string Combined => $"{EditorVersion}/{Revision}";
 }
