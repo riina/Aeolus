@@ -6,6 +6,9 @@
     xmlns:local="clr-namespace:Aeolus"
     Shell.FlyoutBehavior="Disabled">
     <TabBar>
+        <Tab Title="Reent">
+            <ShellContent ContentTemplate="{DataTemplate local:RecentProjects}" />
+        </Tab>
         <Tab Title="Projects">
             <ShellContent ContentTemplate="{DataTemplate local:ProjectDirectoryProjects}" />
         </Tab>

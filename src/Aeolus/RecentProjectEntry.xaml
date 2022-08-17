@@ -3,8 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:Aeolus"
              xmlns:localmodelproxies="using:Aeolus.ModelProxies"
-             x:Class="Aeolus.ProjectDirectoryProjectEntry"
-             x:DataType="localmodelproxies:ProjectDirectoryProject">
+             x:Class="Aeolus.RecentProjectEntry"
+             x:DataType="localmodelproxies:RecentProject">
     <Grid VerticalOptions="Fill">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />

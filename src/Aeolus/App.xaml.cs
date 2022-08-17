@@ -39,6 +39,20 @@ public partial class App : Application
         }
     }
 
+    public List<RecentProject> RecentProjects
+    {
+        get => _recentProjects;
+        set
+        {
+            if (_recentProjects != value)
+            {
+
+                _recentProjects = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public List<ProjectDirectoryProject> ProjectDirectoryProjects
     {
         get => _projectDirectoryProjects;
@@ -94,6 +108,7 @@ public partial class App : Application
 
     public readonly CLInstance CL;
 
+    private List<RecentProject> _recentProjects = new();
     private List<ProjectDirectory> _projectDirectories = new();
     private List<ProjectDirectoryProject> _projectDirectoryProjects = new();
     private bool _busy;
@@ -109,6 +124,7 @@ public partial class App : Application
         var db = fac.CreateDbContext(Array.Empty<string>());
         var cfg = GetConfiguration();
         CL = CLInstance.Create(cfg, db);
+        UpdateRecentProjects();
         UpdateProjectDirectories();
         UpdateProjectDirectoryProjects();
 
@@ -118,6 +134,11 @@ public partial class App : Application
     public void UpdateProjectDirectories()
     {
         ProjectDirectories = CL.GetProjectDirectories();
+    }
+
+    public void UpdateRecentProjects()
+    {
+        RecentProjects = CL.GetRecentProjects();
     }
 
     public void UpdateProjectDirectoryProjects()
@@ -185,6 +206,25 @@ public partial class App : Application
         }
     }
 
+    public async Task ClearRecentProjectsAsync()
+    {
+        await WaitOneAsync(_are);
+        try
+        {
+            Interactible = false;
+            Busy = true;
+            CL.Db.RecentProjects.RemoveRange(CL.Db.RecentProjects);
+            await CL.Db.SaveChangesAsync();
+            UpdateRecentProjects();
+        }
+        finally
+        {
+            Busy = false;
+            Interactible = true;
+            _are.Set();
+        }
+    }
+
     public async Task LoadProjectAsync(string picked)
     {
         await WaitOneAsync(_are);
@@ -200,7 +240,10 @@ public partial class App : Application
                     FailInfo = result.FailInfo ?? ProjectLoadFailInfo.Unknown;
                     Remediations = (IReadOnlyCollection<Remediation>?)result.FailInfo?.GetRemediations() ?? Array.Empty<Remediation>();
                     await Shell.Current.GoToAsync("failed");
+                    return;
                 }
+                await CL.PushRecentProjectAsync(project);
+                UpdateRecentProjects();
             }
         }
         finally

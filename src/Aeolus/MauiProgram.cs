@@ -27,6 +27,8 @@ public static class MauiProgram
 #endif
         builder.Services.AddTransient<ProjectDirectories>();
         builder.Services.AddTransient<ProjectDirectoryProjects>();
+        builder.Services.AddTransient<RecentProjects>();
+        builder.Services.AddTransient<ProjectLoadFailedPage>();
         builder.Services.AddTransient<App>();
         builder.UseMauiCommunityToolkit();
         return builder.Build();

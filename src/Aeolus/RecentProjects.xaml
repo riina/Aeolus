@@ -3,9 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:localmodelproxies="using:Aeolus.ModelProxies"
              xmlns:local="clr-namespace:Aeolus"
-             x:Class="Aeolus.ProjectDirectoryProjects"
+             x:Class="Aeolus.RecentProjects"
              BindingContext="{x:Static local:App.Me}"
-             Title="Projects">
+             Title="Recent">
     <ScrollView>
         <VerticalStackLayout
             Spacing="10"
@@ -14,19 +14,19 @@
             <HorizontalStackLayout Spacing="10" HorizontalOptions="End" >
                 <ActivityIndicator IsRunning="{Binding Busy}" />
                 <Button Style="{DynamicResource smolBtnStyle}"
-                x:Name="RefreshBtn"
-                Text="Refresh"
-                SemanticProperties.Hint="Refresh project list"
-                Clicked="RefreshBtn_Clicked"
+                x:Name="ClearBtn"
+                Text="Clear"
+                SemanticProperties.Hint="Clear recent project list"
+                Clicked="ClearBtn_Clicked"
                 IsEnabled="{Binding Busy, Converter={StaticResource InvertedBoolConverter}}"
                 HorizontalOptions="End" />
             </HorizontalStackLayout>
 
             <CollectionView x:Name="projectList"
-                            BindingContext="{x:Static local:App.Me}" ItemsSource="{Binding ProjectDirectoryProjects}" >
+                            BindingContext="{x:Static local:App.Me}" ItemsSource="{Binding RecentProjects}" >
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
-                        <local:ProjectDirectoryProjectEntry />
+                        <local:RecentProjectEntry />
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>

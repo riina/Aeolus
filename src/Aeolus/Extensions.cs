@@ -11,6 +11,14 @@ internal static class Extensions
             FullPath = v.FullPath
         }).ToList();
 
+    public static List<RecentProject> GetRecentProjects(this CLInstance cl)
+        => cl.Db.RecentProjects.Select(v => new RecentProject
+        {
+            Name = Path.GetFileName(v.FullPath),
+            FullPath = v.FullPath,
+            SoftwareAndFramework = $"{cl.GetPlatformName(v)}\n{cl.GetDisplayFramework(v)}"
+        }).ToList();
+
     public static List<ProjectDirectoryProject> GetProjectDirectoryProjects(this CLInstance cl)
         => cl.Db.ProjectDirectoryProjects.Select(v => new ProjectDirectoryProject
         {
