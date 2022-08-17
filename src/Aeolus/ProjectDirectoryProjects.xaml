@@ -21,7 +21,8 @@
                 <ActivityIndicator BindingContext="{x:Static local:App.Me}" IsRunning="{Binding Busy}" />
             </HorizontalStackLayout>
 
-            <CollectionView x:Name="projectList" x:DataType="localmodelproxies:ProjectDirectoryProject">
+            <CollectionView x:Name="projectList"
+                            BindingContext="{x:Static local:App.Me}" ItemsSource="{Binding ProjectDirectoryProjects}" >
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <local:ProjectDirectoryProjectEntry />

@@ -25,10 +25,37 @@ public partial class App : Application
         }
     }
 
+    public List<ProjectDirectoryProject> ProjectDirectoryProjects
+    {
+        get => _projectDirectoryProjects;
+        set
+        {
+            if (_projectDirectoryProjects != value)
+            {
+
+                _projectDirectoryProjects = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public List<ProjectDirectory> ProjectDirectories
+    {
+        get => _projectDirectories;
+        set
+        {
+            if (_projectDirectories != value)
+            {
+                _projectDirectories = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public readonly CLInstance CL;
 
-    public List<ProjectDirectory> ProjectDirectories = new();
-    public List<ProjectDirectoryProject> ProjectDirectoryProjects = new();
+    private List<ProjectDirectory> _projectDirectories = new();
+    private List<ProjectDirectoryProject> _projectDirectoryProjects = new();
     private bool _busy;
     private readonly AutoResetEvent _are = new(true);
 
@@ -45,20 +72,14 @@ public partial class App : Application
         MainPage = new AppShell();
     }
 
-    public event Action<List<ProjectDirectory>>? OnProjectDirectoriesUpdated;
-
-    public event Action<List<ProjectDirectoryProject>>? OnProjectDirectoryProjectsUpdated;
-
     public void UpdateProjectDirectories()
     {
         ProjectDirectories = CL.GetProjectDirectories();
-        OnProjectDirectoriesUpdated?.Invoke(ProjectDirectories);
     }
 
     public void UpdateProjectDirectoryProjects()
     {
         ProjectDirectoryProjects = CL.GetProjectDirectoryProjects();
-        OnProjectDirectoryProjectsUpdated?.Invoke(ProjectDirectoryProjects);
     }
 
     public async Task AddProjectDirectoryAsync(string picked)

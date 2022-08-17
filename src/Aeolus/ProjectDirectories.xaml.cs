@@ -1,5 +1,3 @@
-using Aeolus.ModelProxies;
-
 namespace Aeolus;
 
 public partial class ProjectDirectories : ContentPage
@@ -11,13 +9,6 @@ public partial class ProjectDirectories : ContentPage
 		InitializeComponent();
         _folderPicker = picker;
         var app = App.Me!;
-        folderList.ItemsSource = app.ProjectDirectories;
-        app.OnProjectDirectoriesUpdated += App_OnProjectDirectoriesUpdated;
-    }
-
-    private void App_OnProjectDirectoriesUpdated(List<ProjectDirectory> directories)
-    {
-        folderList.ItemsSource = directories;
     }
 
     private async void AddBtn_Clicked(object sender, EventArgs e)
