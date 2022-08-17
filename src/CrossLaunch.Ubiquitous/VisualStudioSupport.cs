@@ -27,6 +27,7 @@ public class VisualStudioProjectLoader : IProjectLoader
         var loadResult = await VisualStudioSolution.LoadAsync(project.FullPath);
         if (loadResult.Result is not { } result) return loadResult.FailInfo?.AsProjectLoadResult() ?? ProjectLoadResult.Unknown;
         VisualStudioSolutionFile solutionFile = result.SolutionFile;
+        string projectDir = Path.GetDirectoryName(project.FullPath) ?? "";
         var remediations = new List<ProjectLoadFailRemediation>();
         if (configuration.TryGetFlag("visualstudio.rider.enable", out _))
         {
@@ -47,7 +48,7 @@ public class VisualStudioProjectLoader : IProjectLoader
                 }
                 if (exePath != null)
                 {
-                    ProcessUtils.Start(exePath, Path.GetDirectoryName(project.FullPath) ?? "");
+                    ProcessUtils.Start(exePath, project.FullPath);
                     return ProjectLoadResult.Successful;
                 }
                 remediations.Add(new ProjectLoadFailRemediation("Get JetBrains Rider", @"Install JetBrains Rider, a feature-rich proprietary IDE primarily for .NET development.
@@ -63,7 +64,7 @@ https://www.jetbrains.com/rider/", ProcessUtils.GetUriCallback("https://www.jetb
                 exePath = FSUtil.IfFileExists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft VS Code", "Code.exe"));
             if (exePath != null)
             {
-                ProcessUtils.Start(exePath, Path.GetDirectoryName(project.FullPath) ?? "");
+                ProcessUtils.Start(exePath, projectDir);
                 return ProjectLoadResult.Successful;
             }
             remediations.Add(new ProjectLoadFailRemediation("Get Visual Studio Code", @"Install Visual Studio Code from Microsoft Corporation, a lightweight proprietary code editor.
@@ -77,7 +78,12 @@ https://visualstudio.microsoft.com/vs/", ProcessUtils.GetUriCallback("https://vi
         }
         else if (OperatingSystem.IsMacOS())
         {
-            // TODO load through vs for mac
+            string? exePath = FSUtil.IfFileExists("/Applications/Visual Studio.app/Contents/MacOS/VisualStudio");
+            if (exePath != null)
+            {
+                ProcessUtils.Start(exePath, projectDir);
+                return ProjectLoadResult.Successful;
+            }
             remediations.Add(new ProjectLoadFailRemediation("Get Visual Studio for Mac", @"Install Visual Studio for Mac from Microsoft Corporation, a proprietary IDE primarily for .NET and Xamarin development.
 https://visualstudio.microsoft.com/vs/mac/", ProcessUtils.GetUriCallback("https://visualstudio.microsoft.com/vs/mac/")));
         }
