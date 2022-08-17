@@ -1,6 +1,6 @@
 ﻿namespace Aeolus.ModelProxies;
 
-internal class ProjectDirectoryProject
+public class ProjectDirectoryProject
 {
     public string Name { get; set; }
 
