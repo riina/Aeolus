@@ -1,33 +1,30 @@
-﻿using System.Text.RegularExpressions;
-using CrossLaunch.Models;
+﻿using CrossLaunch.Models;
+using CrossLaunch.Ubiquitous.Formats;
 
 namespace CrossLaunch.Ubiquitous;
 
 // maybe switch to an implementation seeking project file first?
 public class UnitySupport : FolderSupportBase<UnityProjectLoader>
 {
-    private static readonly Regex s_projectVersionRegex = new(@"m_EditorVersionWithRevision:\s*(?<EditorVersion>\S+)\s*\((?<Revision>\S+)\)");
-
     public override string FriendlyPlatformName => "Unity";
 
     public override async Task<EvaluatedProject?> EvaluateProjectAsync(string path, CLConfiguration configuration, CancellationToken cancellationToken = default)
     {
-        string projectFile = Path.Combine(path, "ProjectSettings", "ProjectVersion.txt");
-        if (!File.Exists(projectFile)) return null;
-        return s_projectVersionRegex.Match(await File.ReadAllTextAsync(projectFile, cancellationToken)) is { Success: true } match
-            ? new EvaluatedProject(Path.GetFullPath(path), $"{match.Groups["EditorVersion"]}/{match.Groups["Revision"]}")
-            : null;
+        var loadResult = await UnityProject.LoadAsync(path);
+        return loadResult.Result is { } result ? new EvaluatedProject(Path.GetFullPath(path), result.ProjectVersionFile.Version.Combined) : null;
     }
 
     public override string GetDisplayFramework(BaseProjectModel project) =>
         UnityVersion.TryParseFromCombined(project.Framework, out var unityVersion) ? unityVersion.EditorVersion : project.Framework;
 }
 
-public class UnityProjectLoader : SynchronousProjectLoader
+public class UnityProjectLoader : ProjectLoaderBase
 {
-    public override ProjectLoadResult TryLoad(BaseProjectModel project, CLConfiguration configuration)
+    public override async Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration)
     {
-        if (!UnityVersion.TryParseFromCombined(project.Framework, out var version)) return ProjectLoadResult.BadFrameworkId(project.Framework);
+        var loadResult = await UnityProject.LoadAsync(project.FullPath);
+        if (loadResult.Result is not { } result) return loadResult.FailInfo?.AsProjectLoadResult() ?? ProjectLoadResult.Unknown;
+        var version = result.ProjectVersionFile.Version;
         string[] searchLocations;
         string[] hubLocations;
         if (OperatingSystem.IsWindows())
@@ -66,20 +63,5 @@ unityhub://{version.EditorVersion}/{version.Revision}", ProcessUtils.GetUriCallb
         }
         ProcessUtils.Start(first, "-projectPath", project.FullPath);
         return ProjectLoadResult.Successful;
-    }
-}
-
-internal readonly record struct UnityVersion(string EditorVersion, string Revision)
-{
-    public static bool TryParseFromCombined(string combined, out UnityVersion parsed)
-    {
-        int index = combined.LastIndexOf('/');
-        if (index == -1)
-        {
-            parsed = default;
-            return false;
-        }
-        parsed = new UnityVersion(combined[..index], combined[(index + 1)..]);
-        return true;
     }
 }
