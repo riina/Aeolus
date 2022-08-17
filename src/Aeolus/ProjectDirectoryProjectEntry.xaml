@@ -4,22 +4,21 @@
              xmlns:local="clr-namespace:Aeolus"
              xmlns:localmodelproxies="using:Aeolus.ModelProxies"
              x:Class="Aeolus.ProjectDirectoryProjectEntry">
-    <VerticalStackLayout>
-        <Grid VerticalOptions="Fill">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="80" />
-                <ColumnDefinition Width="50" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+    <Grid VerticalOptions="Fill">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="80" />
+            <ColumnDefinition Width="80" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" Grid.Row="0" Grid.Column="0" x:DataType="localmodelproxies:ProjectDirectoryProject" />
-            <Label Text="{Binding FullPath}" FontSize="12" Grid.Row="1" Grid.Column="0" x:DataType="localmodelproxies:ProjectDirectoryProject" />
-            <Label Text="{Binding SoftwareAndFramework}" FontSize="12" Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" x:DataType="localmodelproxies:ProjectDirectoryProject" VerticalOptions="Center" />
-            <Button Style="{DynamicResource smolBtnStyle}"
+        <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" Grid.Row="0" Grid.Column="0" x:DataType="localmodelproxies:ProjectDirectoryProject" />
+        <Label Text="{Binding FullPath}" FontSize="12" Grid.Row="1" Grid.Column="0" x:DataType="localmodelproxies:ProjectDirectoryProject" />
+        <Label Text="{Binding SoftwareAndFramework}" FontSize="12" Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" x:DataType="localmodelproxies:ProjectDirectoryProject" VerticalOptions="Center" />
+        <Button Style="{DynamicResource smolBtnStyle}"
                 BindingContext="{x:Static local:App.Me}"
                 x:Name="OpenBtn"
                 Text="Open"
@@ -29,6 +28,5 @@
                 HorizontalOptions="End"
                 VerticalOptions="Center"
                 Grid.Row="0" Grid.Column="2" Grid.RowSpan="2"/>
-        </Grid>
-    </VerticalStackLayout>
+    </Grid>
 </ContentView>
