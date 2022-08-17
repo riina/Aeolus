@@ -7,10 +7,14 @@ public abstract class ProjectLoaderBase : IProjectLoader
     public abstract Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration);
 }
 
-public abstract class SynchronousProjectLoader : ProjectLoaderBase
+public abstract class ParsedProjectLoader<T> : ProjectLoaderBase where T : ProjectBase
 {
-    public override Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration)
-        => Task.FromResult(TryLoad(project, configuration));
+    protected abstract Task<ProjectParseResult<T>> ParseAsync(string path);
 
-    public abstract ProjectLoadResult TryLoad(BaseProjectModel project, CLConfiguration configuration);
+    public override async Task<ProjectLoadResult> TryLoadAsync(BaseProjectModel project, CLConfiguration configuration)
+    {
+        var loadResult = await ParseAsync(project.FullPath);
+        if (loadResult.Result is not { } result) return loadResult.FailInfo?.AsProjectLoadResult() ?? ProjectLoadResult.Unknown;
+        return await result.TryLoadAsync(configuration);
+    }
 }
