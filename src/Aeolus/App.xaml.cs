@@ -13,8 +13,8 @@ public partial class App : Application
 
     public readonly CLInstance CL;
 
-    public readonly List<ProjectDirectory> ProjectDirectories = new();
-    public readonly List<ProjectDirectoryProject> ProjectDirectoryProjects = new();
+    public List<ProjectDirectory> ProjectDirectories = new();
+    public List<ProjectDirectoryProject> ProjectDirectoryProjects = new();
 
     public App()
     {
@@ -29,16 +29,20 @@ public partial class App : Application
         MainPage = new AppShell();
     }
 
+    public event Action<List<ProjectDirectory>>? OnProjectDirectoriesUpdated;
+
+    public event Action<List<ProjectDirectoryProject>>? OnProjectDirectoryProjectsUpdated;
+
     public void UpdateProjectDirectories()
     {
-        ProjectDirectories.Clear();
-        ProjectDirectories.AddRange(CL.GetProjectDirectories());
+        ProjectDirectories = CL.GetProjectDirectories();
+        OnProjectDirectoriesUpdated?.Invoke(ProjectDirectories);
     }
 
     public void UpdateProjectDirectoryProjects()
     {
-        ProjectDirectoryProjects.Clear();
-        ProjectDirectoryProjects.AddRange(CL.GetProjectDirectoryProjects());
+        ProjectDirectoryProjects = CL.GetProjectDirectoryProjects();
+        OnProjectDirectoryProjectsUpdated?.Invoke(ProjectDirectoryProjects);
     }
 
 
