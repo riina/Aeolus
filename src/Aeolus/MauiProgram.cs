@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Maui;
+using Microsoft.Maui.LifecycleEvents;
 
 namespace Aeolus;
 
@@ -9,6 +10,13 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+            .ConfigureLifecycleEvents(events =>
+            {
+#if WINDOWS10_0_19041_0_OR_GREATER
+                    events.AddWindows(windows => windows
+                        .OnWindowCreated((window) => Aeolus.WinUI.App.SetWindowSize(window)));
+#endif
+            })
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
