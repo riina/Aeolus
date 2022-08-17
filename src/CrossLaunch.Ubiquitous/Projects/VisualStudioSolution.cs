@@ -33,17 +33,37 @@ public record VisualStudioSolution(string FullPath, VisualStudioSolutionFile Sol
         int index = slice.IndexOf('/');
         if (index != -1)
         {
-            slice = slice[..index];
+            // Take origin version (not minimum) for display
+            slice = slice[(index + 1)..];
             int index2 = slice.IndexOf('.');
             if (index2 != -1)
             {
-                result = new string(slice[..index2]);
-                return true;
+                if (int.TryParse(slice[..index2], out int verInt))
+                {
+                    result = s_versionMap.TryGetValue(verInt, out string? r) ? r : $"v{verInt}";
+                    return true;
+                }
             }
         }
         result = null;
         return false;
     }
+
+    private static readonly Dictionary<int, string> s_versionMap = new()
+    {
+        { 5, "97" },
+        { 6, "6.0" },
+        { 7, ".NET" },
+        { 8, "2005" },
+        { 9, "2008" },
+        { 10, "2010" },
+        { 11, "2012" },
+        { 12, "2013" },
+        { 14, "2015" },
+        { 15, "2017" },
+        { 16, "2019" },
+        { 17, "2022" }
+    };
 
     private static readonly HashSet<Guid> s_riderTypes = new() { Guid.ParseExact("9a19103f-16f7-4668-be54-9a1e7a4f7556", "D"), Guid.ParseExact("fae04ec0-301f-11d3-bf4b-00c04f79efbc", "D") };
 
