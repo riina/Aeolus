@@ -4,9 +4,10 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Aeolus"
-    Shell.FlyoutBehavior="Disabled">
+    Shell.FlyoutBehavior="Disabled"
+    Title="Aeolus">
     <TabBar>
-        <Tab Title="Reent">
+        <Tab Title="Recent">
             <ShellContent ContentTemplate="{DataTemplate local:RecentProjects}" />
         </Tab>
         <Tab Title="Projects">
