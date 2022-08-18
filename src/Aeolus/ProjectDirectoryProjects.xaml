@@ -20,7 +20,7 @@
                     <ColumnDefinition Width="80" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <SearchBar HorizontalOptions="Fill" Grid.Row="0" Grid.Column="0" IsEnabled="{Binding Busy, Converter={StaticResource InvertedBoolConverter}}" />
+                <SearchBar HorizontalOptions="Fill" Grid.Row="0" Grid.Column="0" IsEnabled="{Binding Busy, Converter={StaticResource InvertedBoolConverter}}" TextChanged="SearchBar_TextChanged" />
                 <ActivityIndicator IsRunning="{Binding Busy}" HorizontalOptions="Center" Grid.Row="0" Grid.Column="1" WidthRequest="40" HeightRequest="40" />
                 <Button Style="{DynamicResource smolBtnStyle}" Grid.Row="0" Grid.Column="2"
                 x:Name="RefreshBtn"

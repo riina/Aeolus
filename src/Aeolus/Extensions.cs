@@ -1,5 +1,6 @@
 ﻿using Aeolus.ModelProxies;
 using CrossLaunch;
+using Microsoft.EntityFrameworkCore;
 
 namespace Aeolus;
 
@@ -26,6 +27,9 @@ internal static class Extensions
             FullPath = v.FullPath,
             SoftwareAndFramework = $"{cl.GetPlatformName(v)}\n{cl.GetDisplayFramework(v)}"
         }).ToList();
+
+    public static List<ProjectDirectoryProject> Filter(this List<ProjectDirectoryProject> list, string search)
+        => string.IsNullOrEmpty(search) ? list : list.Where(v => v.FullPath.Contains(search, StringComparison.InvariantCultureIgnoreCase)).ToList();
 
     public static List<Remediation> GetRemediations(this ProjectLoadFailInfo failInfo)
         => failInfo.Remediations.Select(v => new Remediation

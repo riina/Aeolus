@@ -106,10 +106,13 @@ public partial class App : Application
         }
     }
 
+    public string ProjectDirectoryProjectSearch { get; private set; } = "";
+
     public readonly CLInstance CL;
 
     private List<RecentProject> _recentProjects = new();
     private List<ProjectDirectory> _projectDirectories = new();
+    private List<ProjectDirectoryProject> _sourceProjectDirectoryProjects = new();
     private List<ProjectDirectoryProject> _projectDirectoryProjects = new();
     private bool _busy;
     private bool _interactible = true;
@@ -143,7 +146,13 @@ public partial class App : Application
 
     public void UpdateProjectDirectoryProjects()
     {
-        ProjectDirectoryProjects = CL.GetProjectDirectoryProjects();
+        _sourceProjectDirectoryProjects = CL.GetProjectDirectoryProjects();
+        ProjectDirectoryProjects = _sourceProjectDirectoryProjects.Filter(ProjectDirectoryProjectSearch);
+    }
+
+    public void FilterProjectDirectoryProjects()
+    {
+        ProjectDirectoryProjects = _sourceProjectDirectoryProjects.Filter(ProjectDirectoryProjectSearch);
     }
 
     public async Task AddProjectDirectoryAsync(string picked)
@@ -204,6 +213,12 @@ public partial class App : Application
             Interactible = true;
             _are.Set();
         }
+    }
+
+    public void SetProjectDirectoryProjectSearch(string search)
+    {
+        ProjectDirectoryProjectSearch = search;
+        FilterProjectDirectoryProjects();
     }
 
     public async Task ClearRecentProjectsAsync()
