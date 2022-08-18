@@ -7,18 +7,16 @@ namespace Aeolus;
 internal static class Extensions
 {
     public static List<ProjectDirectory> GetProjectDirectories(this CLInstance cl)
-        => cl.Db.ProjectDirectories.Select(v => new ProjectDirectory
-        {
-            FullPath = v.FullPath
-        }).ToList();
+        => cl.Db.ProjectDirectories.ToList().Select(v => new ProjectDirectory(
+            FullPath: v.FullPath
+        )).ToList();
 
     public static List<RecentProject> GetRecentProjects(this CLInstance cl)
-        => cl.Db.RecentProjects.Select(v => new RecentProject
-        {
-            Name = Path.GetFileName(v.FullPath),
-            FullPath = v.FullPath,
-            SoftwareAndFramework = $"{cl.GetPlatformName(v)}\n{cl.GetDisplayFramework(v)}"
-        }).ToList();
+        => cl.Db.RecentProjects.ToList().Select(v => new RecentProject(
+            Name: Path.GetFileName(v.FullPath),
+            FullPath: v.FullPath,
+            SoftwareAndFramework: $"{cl.GetPlatformName(v)}\n{cl.GetDisplayFramework(v)}"
+        )).ToList();
 
     public static List<ProjectDirectoryProject> GetProjectDirectoryProjects(this CLInstance cl, Style[] styleCycle)
         => cl.Db.ProjectDirectoryProjects.ToList().Select((v, i) => new ProjectDirectoryProject(
@@ -36,10 +34,9 @@ internal static class Extensions
         .ToList();
 
     public static List<Remediation> GetRemediations(this ProjectLoadFailInfo failInfo)
-        => failInfo.Remediations.Select(v => new Remediation
-        {
-            ActionShortName = v.ActionShortName,
-            ActionDescription = v.ActionDescription,
-            Callback = v.Callback
-        }).ToList();
+        => failInfo.Remediations.ToList().Select(v => new Remediation(
+            ActionShortName: v.ActionShortName,
+            ActionDescription: v.ActionDescription,
+            Callback: v.Callback
+        )).ToList();
 }
