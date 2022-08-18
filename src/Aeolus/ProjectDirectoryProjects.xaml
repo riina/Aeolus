@@ -11,16 +11,25 @@
             Spacing="10"
             Padding="10,0"
             VerticalOptions="StartAndExpand">
-            <HorizontalStackLayout Spacing="10" HorizontalOptions="End" >
-                <ActivityIndicator IsRunning="{Binding Busy}" />
-                <Button Style="{DynamicResource smolBtnStyle}"
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <SearchBar HorizontalOptions="Fill" Grid.Row="0" Grid.Column="0" IsEnabled="{Binding Busy, Converter={StaticResource InvertedBoolConverter}}" />
+                <ActivityIndicator IsRunning="{Binding Busy}" HorizontalOptions="Center" Grid.Row="0" Grid.Column="1" WidthRequest="40" HeightRequest="40" />
+                <Button Style="{DynamicResource smolBtnStyle}" Grid.Row="0" Grid.Column="2"
                 x:Name="RefreshBtn"
                 Text="Refresh"
                 SemanticProperties.Hint="Refresh project list"
                 Clicked="RefreshBtn_Clicked"
                 IsEnabled="{Binding Busy, Converter={StaticResource InvertedBoolConverter}}"
                 HorizontalOptions="End" />
-            </HorizontalStackLayout>
+            </Grid>
 
             <CollectionView x:Name="projectList"
                             BindingContext="{x:Static local:App.Me}" ItemsSource="{Binding ProjectDirectoryProjects}" >
