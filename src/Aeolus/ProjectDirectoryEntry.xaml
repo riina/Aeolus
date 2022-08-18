@@ -12,7 +12,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Label Text="{Binding FullPath}" FontSize="12" Grid.Row="0" Grid.Column="0" />
+        <Label Text="{Binding FullPath}" FontSize="12" Grid.Row="0" Grid.Column="0" Margin="10,10" />
         <Button Style="{DynamicResource smolBtnStyle}"
                 x:Name="RemoveBtn"
                 Text="Remove"
