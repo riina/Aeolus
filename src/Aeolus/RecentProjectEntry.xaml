@@ -5,7 +5,7 @@
              xmlns:localmodelproxies="using:Aeolus.ModelProxies"
              x:Class="Aeolus.RecentProjectEntry"
              x:DataType="localmodelproxies:RecentProject">
-    <Grid VerticalOptions="Fill">
+    <Grid VerticalOptions="Fill" Style="{Binding Style}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="80" />

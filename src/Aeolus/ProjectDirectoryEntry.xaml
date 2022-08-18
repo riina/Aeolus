@@ -4,7 +4,7 @@
              xmlns:localmodelproxies="using:Aeolus.ModelProxies"
              x:Class="Aeolus.ProjectDirectoryEntry"
              x:DataType="localmodelproxies:ProjectDirectory">
-    <Grid VerticalOptions="Fill">
+    <Grid VerticalOptions="Fill" Style="{Binding Style}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="80" />

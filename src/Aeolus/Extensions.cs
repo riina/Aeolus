@@ -6,16 +6,18 @@ namespace Aeolus;
 
 internal static class Extensions
 {
-    public static List<ProjectDirectory> GetProjectDirectories(this CLInstance cl)
-        => cl.Db.ProjectDirectories.ToList().Select(v => new ProjectDirectory(
-            FullPath: v.FullPath
+    public static List<ProjectDirectory> GetProjectDirectories(this CLInstance cl, Style[] styleCycle)
+        => cl.Db.ProjectDirectories.ToList().Select((v, i) => new ProjectDirectory(
+            FullPath: v.FullPath,
+            Style: styleCycle[i % styleCycle.Length]
         )).ToList();
 
-    public static List<RecentProject> GetRecentProjects(this CLInstance cl)
-        => cl.Db.RecentProjects.ToList().Select(v => new RecentProject(
+    public static List<RecentProject> GetRecentProjects(this CLInstance cl, Style[] styleCycle)
+        => cl.Db.RecentProjects.OrderByDescending(v => v.OpenedTime).ToList().Select((v, i) => new RecentProject(
             Name: Path.GetFileName(v.FullPath),
             FullPath: v.FullPath,
-            SoftwareAndFramework: $"{cl.GetPlatformName(v)}\n{cl.GetDisplayFramework(v)}"
+            SoftwareAndFramework: $"{cl.GetPlatformName(v)}\n{cl.GetDisplayFramework(v)}",
+            Style: styleCycle[i % styleCycle.Length]
         )).ToList();
 
     public static List<ProjectDirectoryProject> GetProjectDirectoryProjects(this CLInstance cl, Style[] styleCycle)

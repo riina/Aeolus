@@ -138,12 +138,12 @@ public partial class App : Application
 
     public void UpdateProjectDirectories()
     {
-        ProjectDirectories = CL.GetProjectDirectories();
+        ProjectDirectories = CL.GetProjectDirectories(_flipStyles);
     }
 
     public void UpdateRecentProjects()
     {
-        RecentProjects = CL.GetRecentProjects();
+        RecentProjects = CL.GetRecentProjects(_flipStyles);
     }
 
     public void UpdateProjectDirectoryProjects()
