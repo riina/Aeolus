@@ -1,14 +1,37 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <PackageVersion>0.1.0</PackageVersion>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackOnBuild>true</PackOnBuild>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="6.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.8" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <Authors>Riina</Authors>
+    <Owners>Riina</Owners>
+    <Description>Project launcher core</Description>
+    <Copyright>Copyright ©2022 Riina</Copyright>
+    <PackageProjectUrl>https://github.com/riina/Aeolus</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/riina/Aeolus</RepositoryUrl>
+    <Company>Riina</Company>
+  </PropertyGroup>
+
 
 </Project>
