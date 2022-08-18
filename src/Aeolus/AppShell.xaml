@@ -16,6 +16,12 @@
         <Tab Title="Folders">
             <ShellContent ContentTemplate="{DataTemplate local:ProjectDirectories}" />
         </Tab>
+        <Tab Title="Options">
+            <ShellContent ContentTemplate="{DataTemplate local:OptionsPage}" />
+        </Tab>
+        <Tab Title="About">
+            <ShellContent ContentTemplate="{DataTemplate local:AboutPage}" />
+        </Tab>
     </TabBar>
 
 </Shell>
