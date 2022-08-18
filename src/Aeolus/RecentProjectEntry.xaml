@@ -6,28 +6,21 @@
              x:Class="Aeolus.RecentProjectEntry"
              x:DataType="localmodelproxies:RecentProject">
     <Grid VerticalOptions="Fill" Style="{Binding Style}">
+        <Grid.GestureRecognizers>
+            <TapGestureRecognizer Tapped="TapGestureRecognizer_Tapped"/>
+        </Grid.GestureRecognizers>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="80" />
             <ColumnDefinition Width="80" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-
-        <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" Grid.Row="0" Grid.Column="0" />
-        <Label Text="{Binding FullPath}" FontSize="12" Grid.Row="1" Grid.Column="0" />
-        <Label Text="{Binding SoftwareAndFramework}" FontSize="12" Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" VerticalOptions="Center" />
-        <Button Style="{DynamicResource smolBtnStyle}" x:DataType="local:App"
-                BindingContext="{x:Static local:App.Me}"
-                x:Name="OpenBtn"
-                Text="Open"
-                SemanticProperties.Hint="Open this project"
-                Clicked="OpenBtn_Clicked"
-                IsEnabled="{Binding Busy, Converter={StaticResource InvertedBoolConverter}}"
-                HorizontalOptions="End"
-                VerticalOptions="Center"
-                Grid.Row="0" Grid.Column="2" Grid.RowSpan="2"/>
+        <Grid.Children>
+            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold" Grid.Row="0" Grid.Column="0" />
+            <Label Text="{Binding FullPath}" FontSize="12" Grid.Row="1" Grid.Column="0" />
+            <Label Text="{Binding SoftwareAndFramework}" FontSize="12" Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" VerticalOptions="Center" />
+        </Grid.Children>
     </Grid>
 </ContentView>

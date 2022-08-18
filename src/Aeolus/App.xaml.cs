@@ -244,6 +244,7 @@ public partial class App : Application
 
     public async Task LoadProjectAsync(string picked)
     {
+        if (Busy) return;
         await WaitOneAsync(_are);
         try
         {

@@ -9,6 +9,7 @@ public partial class ProjectDirectories : ContentPage
 		InitializeComponent();
         _folderPicker = picker;
         var app = App.Me!;
+        app.UpdateProjectDirectories();
     }
 
     private async void AddBtn_Clicked(object sender, EventArgs e)
