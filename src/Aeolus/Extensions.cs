@@ -20,16 +20,20 @@ internal static class Extensions
             SoftwareAndFramework = $"{cl.GetPlatformName(v)}\n{cl.GetDisplayFramework(v)}"
         }).ToList();
 
-    public static List<ProjectDirectoryProject> GetProjectDirectoryProjects(this CLInstance cl)
-        => cl.Db.ProjectDirectoryProjects.Select(v => new ProjectDirectoryProject
-        {
-            Name = Path.GetFileName(v.FullPath),
-            FullPath = v.FullPath,
-            SoftwareAndFramework = $"{cl.GetPlatformName(v)}\n{cl.GetDisplayFramework(v)}"
-        }).ToList();
+    public static List<ProjectDirectoryProject> GetProjectDirectoryProjects(this CLInstance cl, Style[] styleCycle)
+        => cl.Db.ProjectDirectoryProjects.ToList().Select((v, i) => new ProjectDirectoryProject(
+            Name: Path.GetFileName(v.FullPath),
+            FullPath: v.FullPath,
+            SoftwareAndFramework: $"{cl.GetPlatformName(v)}\n{cl.GetDisplayFramework(v)}",
+            Style: styleCycle[i % styleCycle.Length])
+        ).ToList();
 
-    public static List<ProjectDirectoryProject> Filter(this List<ProjectDirectoryProject> list, string search)
-        => string.IsNullOrEmpty(search) ? list : list.Where(v => v.FullPath.Contains(search, StringComparison.InvariantCultureIgnoreCase)).ToList();
+    public static List<ProjectDirectoryProject> Filter(this List<ProjectDirectoryProject> list, string search, Style[] styleCycle)
+        => string.IsNullOrEmpty(search)
+        ? list
+        : list.Where(v => v.FullPath.Contains(search, StringComparison.InvariantCultureIgnoreCase))
+        .Select((v, i) => v with { Style = styleCycle[i % styleCycle.Length] })
+        .ToList();
 
     public static List<Remediation> GetRemediations(this ProjectLoadFailInfo failInfo)
         => failInfo.Remediations.Select(v => new Remediation

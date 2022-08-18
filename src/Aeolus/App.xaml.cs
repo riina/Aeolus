@@ -110,6 +110,7 @@ public partial class App : Application
 
     public readonly CLInstance CL;
 
+    private Style[] _flipStyles;
     private List<RecentProject> _recentProjects = new();
     private List<ProjectDirectory> _projectDirectories = new();
     private List<ProjectDirectoryProject> _sourceProjectDirectoryProjects = new();
@@ -127,6 +128,7 @@ public partial class App : Application
         var db = fac.CreateDbContext(Array.Empty<string>());
         var cfg = GetConfiguration();
         CL = CLInstance.Create(cfg, db);
+        _flipStyles = new Style[] { (Style)Resources["flipStyle0"], (Style)Resources["flipStyle1"] };
         UpdateRecentProjects();
         UpdateProjectDirectories();
         UpdateProjectDirectoryProjects();
@@ -146,13 +148,13 @@ public partial class App : Application
 
     public void UpdateProjectDirectoryProjects()
     {
-        _sourceProjectDirectoryProjects = CL.GetProjectDirectoryProjects();
-        ProjectDirectoryProjects = _sourceProjectDirectoryProjects.Filter(ProjectDirectoryProjectSearch);
+        _sourceProjectDirectoryProjects = CL.GetProjectDirectoryProjects(_flipStyles);
+        ProjectDirectoryProjects = _sourceProjectDirectoryProjects.Filter(ProjectDirectoryProjectSearch, _flipStyles);
     }
 
     public void FilterProjectDirectoryProjects()
     {
-        ProjectDirectoryProjects = _sourceProjectDirectoryProjects.Filter(ProjectDirectoryProjectSearch);
+        ProjectDirectoryProjects = _sourceProjectDirectoryProjects.Filter(ProjectDirectoryProjectSearch, _flipStyles);
     }
 
     public async Task AddProjectDirectoryAsync(string picked)

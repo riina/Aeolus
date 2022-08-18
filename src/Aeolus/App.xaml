@@ -35,6 +35,12 @@
                     <Style x:Key="unstyledBtnStyle" TargetType="Button">
                         <Setter Property="CornerRadius" Value="0"/>
                     </Style>
+                    <Style x:Key="flipStyle0" TargetType="ContentView" ApplyToDerivedTypes="True">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}" />
+                    </Style>
+                    <Style x:Key="flipStyle1" TargetType="ContentView" ApplyToDerivedTypes="True">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource Gray400}, Dark={StaticResource Gray900}}" />
+                    </Style>
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
